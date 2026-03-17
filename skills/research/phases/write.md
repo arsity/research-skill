@@ -30,7 +30,7 @@ Read the user's own content from:
 3. Load cite-log for already-verified citations
 4. Understand the paper's positioning from discover/triage results
 
-### Step 1.5: Invoke Skill Router
+### Step 1.5: Invoke Skill Router (skill-router)
 
 Invoke the skill router with:
 - Input: paper metadata from the research brief + read analyses
