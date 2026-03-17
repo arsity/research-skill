@@ -44,6 +44,35 @@ echo '{"sessions": [], "current_session": null}' > .research-workspace/state.jso
 
 Each survey creates a session: `.research-workspace/sessions/{topic-slug}-{date}/`
 
+## Unified Input Parsing
+
+Phases that accept a paper identifier (discuss, read, cite) share this logic. Discover takes a topic description, not a paper identifier.
+
+### Input Types
+
+- **arXiv ID** (e.g., `2401.12345`): Direct lookup via `s2_match.sh` or S2 API
+- **DOI** (e.g., `10.1109/...`): Direct CrossRef/S2 lookup
+- **Free text** (paper title or keywords):
+  1. Try `s2_match.sh "<text>"` for exact title match
+  2. If no exact match: `s2_search.sh "<text>" 5` + `dblp_search.sh "<text>" 5`
+
+### Clarify Flow
+
+When free-text search returns multiple candidates, present each with:
+- Title + authors (first 3) + year + venue
+- One-sentence core contribution (from abstract)
+- Quality marker (CCF/JCR tier, citation count via `venue_info.sh`)
+
+User selects one → proceed to the requested phase.
+
+### Domain Override Flags
+
+All commands (except trending) support:
+- `--domain <cat1,cat2>`: Additive — merge with auto-detected categories
+- `--domain-only <cat1,cat2>`: Exclusive — use only these categories
+
+Category names match the skill-router mapping table (semantic match OK).
+
 ## Degraded Mode
 
 If AlphaXiv MCP is unavailable:
