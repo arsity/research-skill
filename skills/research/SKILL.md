@@ -1,11 +1,11 @@
 ---
 name: research
-description: Unified academic research lifecycle skill. Use for literature survey, paper reading, citation management, paper writing, and trend monitoring. Triggers on /research command.
+description: Unified academic research lifecycle skill. Use for literature discovery, deep discussion, paper reading, citation management, paper writing, and trend monitoring. Triggers on /research command.
 ---
 
 # Research Skill
 
-Full academic research lifecycle: discover, triage, read, cite, write, trending.
+Full academic research lifecycle: discover, discuss, read, cite, write, trending.
 
 ## Preload
 
@@ -13,25 +13,26 @@ On every invocation, before doing anything else:
 
 1. **Load high-agency skill**: Invoke `pua:high-agency` to ensure exhaustive search and retry behavior
 2. **Check AlphaXiv MCP**: Test if AlphaXiv MCP tools are available. If not, operate in degraded mode (see below)
+3. **Load skill router**: Read `phases/skill-router.md` for domain skill mapping. Parse any `--domain` or `--domain-only` flags from user input.
 
 ## Entry Point
 
 Parse user intent from `/research <args>` and route to the appropriate phase module.
 
-| Input pattern                    | Phase flow              | Module                |
-| -------------------------------- | ----------------------- | --------------------- |
-| `/research survey "topic"`       | discover → triage → read | `phases/discover.md`  |
-| `/research discover "topic"`     | discover                 | `phases/discover.md`  |
-| `/research triage`               | triage                   | `phases/triage.md`    |
-| `/research read 2401.12345`      | read                     | `phases/read.md`      |
-| `/research read "paper title"`   | read                     | `phases/read.md`      |
-| `/research cite 2401.12345`      | cite                     | `phases/cite.md`      |
-| `/research cite "paper title"`   | cite                     | `phases/cite.md`      |
-| `/research write <section>`      | write                    | `phases/write.md`     |
-| `/research trending`             | trending                 | `phases/trending.md`  |
-| Ambiguous input                  | Ask user to clarify      | —                     |
+| Input pattern | Phase | Module |
+|---------------|-------|--------|
+| `/research discover "topic"` | discover (consolidated) | `phases/discover.md` |
+| `/research discuss` | discuss (current session) | `phases/discuss.md` |
+| `/research discuss <paper>` | discuss (from specific paper) | `phases/discuss.md` |
+| `/research read <paper>` | read (standalone) | `phases/read.md` |
+| `/research cite <paper>` | cite | `phases/cite.md` |
+| `/research write <section>` | write | `phases/write.md` |
+| `/research trending` | trending | `phases/trending.md` |
+| Ambiguous input | Ask user to clarify | — |
 
-For `/research survey`, the full flow is: discover → present results → user selects → triage → user selects → read.
+`<paper>` accepts: arXiv ID, DOI, or paper title (with clarify flow if ambiguous). See Unified Input Parsing section below.
+
+All commands support optional `--domain <categories>` or `--domain-only <categories>` flags. See Unified Input Parsing section for details.
 
 ## Workspace
 
@@ -43,6 +44,12 @@ echo '{"sessions": [], "current_session": null}' > .research-workspace/state.jso
 ```
 
 Each survey creates a session: `.research-workspace/sessions/{topic-slug}-{date}/`
+Contents:
+- `discover.json` — search results with verdicts + landscape summary
+- `discuss/brief.json` — research brief from discuss phase
+- `read/{paper_id}.json` — structured paper analyses
+- `cite/{paper_id}.bib` — verified BibTeX entries
+- `cite/cite-log.json` — citation metadata and sources
 
 ## Unified Input Parsing
 
@@ -76,8 +83,8 @@ Category names match the skill-router mapping table (semantic match OK).
 ## Degraded Mode
 
 If AlphaXiv MCP is unavailable:
-- **Discover**: S2 + HF agents only (2 of 3)
-- **Triage**: `curl -s "https://alphaxiv.org/overview/{ID}.md"` as fallback
+- **Discover**: S2 + HF agents only (2 of 3); quick-read uses S2 abstract instead of AlphaXiv overview
+- **Discuss**: Knowledge gap filling uses S2 search + arXiv PDF instead of AlphaXiv content
 - **Read**: `curl -s "https://alphaxiv.org/abs/{ID}.md"`, then arXiv PDF
 - **Trending**: HF daily papers only, AlphaXiv source skipped
 
@@ -93,6 +100,10 @@ Each parallel search agent has a 60-second timeout. If an agent times out or err
 4. **Quality gate** — no paper presented to user without quality evaluation
 5. **Source tracing** — every citation tagged with data source ("via DBLP", "via CrossRef", etc.)
 6. **Own model for analysis** — never rely on AlphaXiv's AI-generated answers; use their content extraction, analyze with own Claude
+7. **Domain skill grounding** — domain skills provide expert context, but all factual claims must still trace to paper content or API responses, never to skill-generated assertions alone
+8. **Adversarial before commitment** — no research direction is finalized without adversarial novelty check against existing literature
+9. **Triple review for framing** — abstract and introduction must pass reviewer, AC/SAC, and senior researcher perspectives before finalization
+10. **Simplicity preference** — between two approaches of similar merit, prefer the simpler one
 
 ## Language
 
@@ -138,6 +149,9 @@ All scripts are in `skills/research/scripts/`. Key scripts:
 - `high-agency` from `tanwei/pua` — pre-loaded at skill start
 - `pua-en` from `tanwei/pua` — pressure escalation when stuck
 - `ml-paper-writing` from `Orchestra-Research AI-Research-SKILLs` — paper structure for write phase
+- `brainstorming-research-ideas` from `Orchestra-Research AI-Research-SKILLs` — search strategy and ideation
+- `creative-thinking-for-research` from `Orchestra-Research AI-Research-SKILLs` — cognitive frameworks for novel ideas
+- All 21 domain skill categories from `Orchestra-Research AI-Research-SKILLs` — invoked via skill router (resolved through Claude Code's Skill tool)
 - `humanizer` skill — style review for write phase
 
 ### Required MCP servers (user must configure)
@@ -156,7 +170,7 @@ Before using /research, please ensure:
 
 1. Install plugins:
    - tanwei/pua (provides high-agency, pua-en skills)
-   - Orchestra-Research AI-Research-SKILLs (provides ml-paper-writing)
+   - Orchestra-Research AI-Research-SKILLs (provides ml-paper-writing, brainstorming-research-ideas, creative-thinking-for-research, and 21 domain skill categories)
    - humanizer skill
 
 2. Configure MCP servers:
