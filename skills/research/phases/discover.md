@@ -1,18 +1,29 @@
 # Discover Phase
 
-Search, merge, evaluate, and rank papers for a research topic.
+Broad field scan: search → triage → quick-read → landscape report.
 
 ## Trigger
 
-Called when user invokes `/research survey "topic"` or `/research discover "topic"`.
+Called when user invokes `/research discover "topic"`.
 
 ## Workflow
 
-### Step 1: Parse query
+### Step 1: Parse query + invoke skill router
 
 Extract the user's research query. If ambiguous, ask one clarifying question before proceeding.
 
-### Step 2: Parallel search — dispatch three agents
+Invoke the skill router with:
+- Input: `topic_description` = user's query
+- Phase type: `discover`
+- Apply `--domain` / `--domain-only` if user specified
+
+The router returns primary domain categories (top 1-2) + `research-ideation` for search strategy.
+
+### Step 2: Search strategy
+
+Invoke `research-ideation` skill (`brainstorming-research-ideas`) to generate diversified search queries from the user's topic. This produces multiple angles and keyword variations to improve search coverage.
+
+### Step 3: Parallel search — dispatch three agents
 
 Launch three search agents in parallel. Each has a 60-second timeout. If an agent errors or times out, proceed with results from the others.
 
@@ -45,7 +56,7 @@ If AlphaXiv MCP is unavailable, skip this agent (degraded mode).
 Use HF MCP tool:
 - `mcp__claude_ai_Hugging_Face__paper_search` with the query (returns up to 12 results)
 
-### Step 3: Merge
+### Step 4: Merge
 
 Receive results from all agents. Deduplicate:
 1. By arXiv ID (exact match)
@@ -68,7 +79,7 @@ Normalize all results to a common format:
 }
 ```
 
-### Step 4: Quality evaluation
+### Step 5: Quality evaluation
 
 For each paper in the merged list:
 
@@ -109,34 +120,78 @@ For each paper in the merged list:
    total      = base_score + weighted + penalty
    ```
 
-### Step 5: Rank and present
+### Step 6: Quick-read (absorbed from triage)
 
-Sort papers by composite score (descending). Present to user:
+For top N papers by composite score (highest first):
 
-For each paper:
-- **Title** (year) — venue
-- Authors (first 3)
-- Citations: N | Quality: CCF-A / Q1 / etc.
-- Score: X.X | Source: found in S2, AlphaXiv
-- arXiv status (if applicable)
-- Abstract (first 200 chars)
+**For arXiv papers:**
 
-### Step 6: Save to workspace
+1. Try AlphaXiv MCP `get_paper_content` (report/overview mode)
+2. If MCP unavailable: `curl -s "https://alphaxiv.org/overview/{arxiv_id}.md"`
+3. If alphaxiv returns 404: use S2 abstract from discover results
+
+**For non-arXiv papers (conference-only):**
+
+1. Check S2 `openAccessPdf` URL from discover results
+2. If available: download and read the PDF directly
+3. If not: resolve DOI to publisher page:
+   - CVF Open Access for CVPR/ICCV/ECCV papers
+   - ACM Digital Library for ACM papers
+   - IEEE Xplore for IEEE papers
+4. Read the paper's abstract and introduction
+
+For each paper, generate:
+- **Core contribution**: one sentence summarizing what this paper adds
+- **Read recommendation**: "Must read" / "Worth reading" / "Skim" / "Skip"
+- **Domain assessment**: invoke matched domain skill (from Step 1's router result) for domain-specific relevance assessment
+
+### Step 7: Present ranked results
+
+Sort by composite score (descending). For each paper:
+
+```
+1. [Must read] Title (Year) — Venue
+   Authors (first 3)
+   Core contribution: one sentence
+   Citations: N | Quality: CCF-A / Q1 | Score: X.X
+   Domain insight: domain-specific assessment from skill
+```
+
+### Step 8: Landscape summary
+
+Synthesize a 1-paragraph overview of the field based on all discovered papers:
+- Key themes and dominant approaches
+- Recent trends (last 1-2 years)
+- Notable gaps or underexplored directions
+- Where the user's interest fits in the landscape
+
+### Step 9: Save to workspace
 
 Save results to `.research-workspace/sessions/{topic-slug}-{date}/discover.json`:
 ```json
 {
   "query": "...",
   "timestamp": "...",
+  "landscape_summary": "...",
+  "skills_invoked": ["..."],
   "total_found": 42,
-  "results": [{ "paper_id": "...", "title": "...", "score": 85.3, ... }]
+  "results": [{
+    "paper_id": "...", "title": "...", "year": 2024, "venue": "...",
+    "citations": 123, "doi": "...", "arxiv_id": "...",
+    "authors": [{"name": "...", "id": "..."}],
+    "source": "s2|alphaxiv|hf", "found_in": ["s2", "alphaxiv"],
+    "score": 85.3,
+    "verdict": "must_read",
+    "core_contribution": "...",
+    "domain_assessment": "..."
+  }]
 }
 ```
 
-### Step 7: Expansion options
+### Step 10: Expansion options
 
 After presenting results, offer the user:
 - "Want to find papers that cite [paper X]?" → `s2_citations.sh`
 - "Want to trace references of [paper X]?" → `s2_references.sh`
 - "Want recommendations based on these papers?" → `s2_recommend.sh` with top paper IDs as positives
-- "Ready to triage?" → proceed to triage phase
+- "Ready to discuss?" → proceed to discuss phase
