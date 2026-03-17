@@ -11,7 +11,7 @@
   "plugins": [
     {
       "name": "research-skill",
-      "description": "Unified academic research lifecycle skill: literature discovery via Semantic Scholar/DBLP/CrossRef, paper triage with venue quality evaluation (CCF/IF), deep reading with AlphaXiv, citation management with BibTeX, research writing, and trending paper monitoring.",
+      "description": "Unified academic research lifecycle skill: literature discovery with domain-aware skill routing (21 AI research categories), deep discussion and research ideation with adversarial checks, paper reading with expert perspectives, citation management with BibTeX, research writing with triple review gate, and trending paper monitoring.",
       "version": "1.0.0",
       "source": "./",
       "author": {
