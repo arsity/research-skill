@@ -17,7 +17,7 @@ Auto-detect based on workspace context:
 
 Read the user's own content from:
 - `.tex` files from overleaf git clone (if present)
-- Prior survey/read/cite results from `.research-workspace/`
+- Prior discover/read/cite results from `.research-workspace/`
 - Notion pages (if user specifies, via Notion MCP)
 - User's direct instructions and notes
 
@@ -28,7 +28,7 @@ Read the user's own content from:
 1. Check for `.tex` files in workspace — read existing draft sections
 2. Load relevant read analyses from `.research-workspace/sessions/*/read/`
 3. Load cite-log for already-verified citations
-4. Understand the paper's positioning from discover/triage results
+4. Understand the paper's positioning from discover results
 
 ### Step 1.5: Invoke Skill Router (skill-router)
 

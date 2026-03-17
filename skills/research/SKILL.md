@@ -43,7 +43,7 @@ mkdir -p .research-workspace/sessions
 echo '{"sessions": [], "current_session": null}' > .research-workspace/state.json
 ```
 
-Each survey creates a session: `.research-workspace/sessions/{topic-slug}-{date}/`
+Each discover invocation creates a session: `.research-workspace/sessions/{topic-slug}-{date}/`
 Contents:
 - `discover.json` — search results with verdicts + landscape summary
 - `discuss/brief.json` — research brief from discuss phase

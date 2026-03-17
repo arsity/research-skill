@@ -4,7 +4,7 @@ Deep analysis of selected papers.
 
 ## Trigger
 
-Called after triage, or directly via `/research read 2401.12345` or `/research read "paper title"`.
+Called via `/research read 2401.12345` or `/research read "paper title"`.
 
 ## Workflow
 
