@@ -30,6 +30,23 @@ Read the user's own content from:
 3. Load cite-log for already-verified citations
 4. Understand the paper's positioning from discover/triage results
 
+### Step 1.5: Invoke Skill Router
+
+Invoke the skill router with:
+- Input: paper metadata from the research brief + read analyses
+- Phase type: `write`
+- Router returns primary domain skills for technical accuracy review
+
+Also load the research brief from discuss phase if available:
+`.research-workspace/sessions/{slug}/discuss/brief.json`
+
+**Context source priority** (updated):
+1. Research brief from discuss phase — primary framing source
+2. Read analyses from workspace — detailed technical content
+3. Existing `.tex` files — current draft state
+4. Cite-log — verified citations
+5. User's direct instructions
+
 ### Step 2: Invoke ml-paper-writing skill
 
 Use the `ml-paper-writing` skill (from Orchestra-Research AI-Research-SKILLs plugin) for:
@@ -62,6 +79,42 @@ Invoke the `humanizer` skill to review the written text for:
 - AI writing patterns to remove
 - Natural academic voice
 - Clarity and conciseness
+
+### Step 5.5: Triple Review Gate (abstract + introduction only)
+
+If the section being written is `abstract` or `introduction`, auto-trigger three review perspectives after the initial draft:
+
+**Reviewer Perspective (Technical Rigor):**
+- Is the motivation backed by a concrete failure mode, not an abstract gap?
+- Are contributions clearly distinguished from prior work?
+- Do claims align with what the experiments can demonstrate?
+- Output: 2-3 specific revision suggestions pointing to concrete sentences.
+
+**AC/SAC Perspective (Novelty & Significance):**
+- Can the contribution be summarized in one sentence that a non-expert understands?
+- Is this incremental or substantial? What's the delta over closest prior work?
+- Is there concurrent work risk? (Check recent arXiv for similar submissions)
+- Output: 2-3 specific revision suggestions pointing to concrete sentences.
+
+**Senior Researcher Perspective (Impact & Elegance):**
+- "If this research succeeds perfectly, who does something differently tomorrow?"
+- Is the problem framing revealing a deeper insight, or just stating a gap?
+- Is this the simplest, most elegant formulation of the contribution?
+- Output: 2-3 specific revision suggestions pointing to concrete sentences.
+
+Present all suggestions to user. User decides which to adopt. Optional re-run after revision.
+
+### Step 5.6: Consistency Check (method, experiments, conclusion)
+
+If the section being written is `method`, `experiments`, or `conclusion`, run a lightweight structural cross-reference scan against existing draft sections:
+
+- Introduction lists N contributions → does experiments have a corresponding table/figure for each?
+- Method assumes specific input format → does the dataset actually provide that format?
+- Abstract claims "state-of-the-art" → do results show superiority over ALL listed baselines?
+- Conclusion doesn't overclaim beyond what experiments demonstrate
+- Method's assumptions match experiment setup (e.g., "RGB-IR pair" input → dataset provides IR)
+
+Flag inconsistencies for user to resolve. Do not auto-fix — the user decides which side to change.
 
 ### Step 6: Present to user
 
