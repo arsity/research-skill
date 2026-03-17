@@ -28,13 +28,10 @@ The router returns primary domain skills. These are loaded and provide expert pe
 
 Follow this fallback chain (stop at the first that provides sufficient content):
 
-1. **AlphaXiv MCP `get_paper_content`** (report mode) — own Claude analyzes the structured report
-2. **AlphaXiv MCP `get_paper_content`** (full text / raw markdown) — if report lacks detail, get full text
-3. **AlphaXiv curl fallback** — if MCP unavailable:
-   - `curl -s "https://alphaxiv.org/overview/{ID}.md"` (overview)
-   - `curl -s "https://alphaxiv.org/abs/{ID}.md"` (full text)
-4. **arXiv PDF** — download from `https://arxiv.org/pdf/{ID}` and read directly
-5. **Conference/publisher PDF** — for non-arXiv papers:
+1. **AlphaXiv overview** — `curl -s "https://alphaxiv.org/overview/{ID}.md"` — structured AI-generated overview, optimized for LLM consumption
+2. **AlphaXiv full text** — `curl -s "https://alphaxiv.org/abs/{ID}.md"` — full extracted paper text (use if overview is 404 or lacks needed detail)
+3. **arXiv PDF** — download from `https://arxiv.org/pdf/{ID}` and read directly (if both alphaxiv endpoints return 404)
+4. **Conference/publisher PDF** — for non-arXiv papers:
    - S2 `openAccessPdf` field
    - CVF Open Access (CVPR/ICCV/ECCV)
    - ACM Digital Library
@@ -55,7 +52,7 @@ Fetch the published conference version:
 
 ### Step 4: Additional tools during read
 
-- **Code inspection**: AlphaXiv MCP `read_files_from_github_repository` if the paper has an associated repo
+- **Code inspection**: if the paper links a GitHub repo (in S2 metadata, abstract, or alphaxiv overview), browse it directly via WebFetch
 - **Cross-paper evidence**: `s2_snippet.sh` to find specific claims or methods across papers. Use when: the user questions a claim, or you need corroborating evidence.
 
 ### Step 5: Produce structured analysis
@@ -96,7 +93,7 @@ Save to `.research-workspace/sessions/{slug}/read/{paper_id}.json`:
 {
   "paper_id": "...",
   "title": "...",
-  "content_source": "alphaxiv_mcp|alphaxiv_curl|arxiv_pdf|publisher_pdf",
+  "content_source": "alphaxiv_overview|alphaxiv_abs|arxiv_pdf|publisher_pdf",
   "skills_invoked": ["multimodal:clip", "fine-tuning:peft"],
   "analysis": {
     "research_question": "...",

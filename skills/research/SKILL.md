@@ -12,8 +12,7 @@ Full academic research lifecycle: discover, discuss, read, cite, write, trending
 On every invocation, before doing anything else:
 
 1. **Load high-agency skill**: Invoke `pua:high-agency` to ensure exhaustive search and retry behavior
-2. **Check AlphaXiv MCP**: Test if AlphaXiv MCP tools are available. If not, operate in degraded mode (see below)
-3. **Load skill router**: Read `phases/skill-router.md` for domain skill mapping. Parse any `--domain` or `--domain-only` flags from user input.
+2. **Load skill router**: Read `phases/skill-router.md` for domain skill mapping. Parse any `--domain` or `--domain-only` flags from user input.
 
 ## Entry Point
 
@@ -79,14 +78,6 @@ All commands support:
 - `--domain-only <cat1,cat2>`: Exclusive — use only these categories
 
 Category names match the skill-router mapping table (semantic match OK).
-
-## Degraded Mode
-
-If AlphaXiv MCP is unavailable:
-- **Discover**: S2 + HF agents only (2 of 3); quick-read uses S2 abstract instead of AlphaXiv overview
-- **Discuss**: Knowledge gap filling uses S2 search + arXiv PDF instead of AlphaXiv content
-- **Read**: `curl -s "https://alphaxiv.org/abs/{ID}.md"`, then arXiv PDF
-- **Trending**: HF daily papers only, AlphaXiv source skipped
 
 ## Timeout Policy
 
@@ -154,10 +145,6 @@ All scripts are in `skills/research/scripts/`. Key scripts:
 - All 21 domain skill categories from `Orchestra-Research AI-Research-SKILLs` — invoked via skill router (resolved through Claude Code's Skill tool)
 - `humanizer` skill — style review for write phase
 
-### Required MCP servers (user must configure)
-- **AlphaXiv MCP**: endpoint `https://api.alphaxiv.org/mcp/v1` (SSE + OAuth 2.0)
-- **HF MCP**: Hugging Face integration
-
 ### Required API keys
 - **Semantic Scholar**: save `S2_API_KEY` in `skills/research/.env`. Get from: https://www.semanticscholar.org/product/api/api-key
 
@@ -173,9 +160,8 @@ Before using /research, please ensure:
    - Orchestra-Research AI-Research-SKILLs (provides ml-paper-writing, brainstorming-research-ideas, creative-thinking-for-research, and 21 domain skill categories)
    - humanizer skill
 
-2. Configure MCP servers:
-   - AlphaXiv MCP: endpoint https://api.alphaxiv.org/mcp/v1 (SSE + OAuth)
-   - HF MCP: Hugging Face integration
+2. Install hf CLI:
+   curl -LsSf https://hf.co/cli/install.sh | bash -s
 
 3. Set up API keys:
    - Semantic Scholar: save S2_API_KEY in skills/research/.env
@@ -189,5 +175,5 @@ Before using /research, please ensure:
 | S2 | 1 req/sec (with key) | Sequential within agent, use batch/bulk |
 | DBLP | ~1 req/sec | Sequential, 1s delay |
 | CrossRef | No strict limit | Polite usage |
-| HF API | No strict limit | Single calls |
-| AlphaXiv MCP | Unknown | Respect errors |
+| HF CLI (`hf papers ls`) | No strict limit | Single calls |
+| AlphaXiv curl | No strict limit | Respect 404s, no retry loop |

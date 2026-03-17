@@ -18,18 +18,9 @@ bash scripts/hf_daily_papers.sh 30
 
 Returns papers with title, arxiv_id, summary, upvotes, comments, github info.
 
-**Source 2: AlphaXiv Hot (if MCP available)**
-
-Use AlphaXiv MCP `embedding_similarity_search` with broad queries based on user's research profile:
-- "multimodal large language model vision"
-- "human pose estimation low visibility"
-- "text to image video generation"
-
-If MCP unavailable, skip this source (HF-only mode).
-
 ### Step 2: Deduplicate
 
-Merge results from both sources. Deduplicate by arXiv ID.
+Deduplicate results by arXiv ID (in case the same paper appears in multiple pages).
 
 ### Step 3: Personalization filter
 

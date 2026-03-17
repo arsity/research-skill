@@ -41,7 +41,7 @@ Iterative, user-driven discussion. This is the core of the discuss phase.
 - User questions a conclusion without comparison data → targeted read of the comparison paper
 - Domain skill suggests related work → supplementary discover with `s2_search.sh`
 
-**AlphaXiv degraded mode**: If AlphaXiv MCP is unavailable, knowledge gap filling uses S2 search + arXiv PDF instead of AlphaXiv content for quick-reads of newly discovered papers.
+**Knowledge gap quick-reads**: Use `curl -s "https://alphaxiv.org/overview/{arxiv_id}.md"` for newly discovered papers. If alphaxiv returns 404, fall back to S2 abstract or arXiv PDF.
 
 **Out-of-domain search**:
 - Abstract the core problem to a general form (e.g., "signal recovery under noise" instead of "pose estimation in fog")

@@ -11,7 +11,7 @@ A Claude Code plugin for academic research with domain-aware skill routing. `/re
 
 | Command | What happens |
 |---------|-------------|
-| `/research discover "topic"` | Parallel search across S2 + HF + AlphaXiv, deduplicate, quality-rank, quick-read top papers, generate landscape summary |
+| `/research discover "topic"` | S2 semantic search + HF daily papers, deduplicate, quality-rank, quick-read top papers (via AlphaXiv curl), generate landscape summary |
 | `/research discuss` | Deep discussion: assumption surfacing, adversarial novelty check, reviewer simulation, significance test, experiment design |
 | `/research discuss <paper>` | Start discussion from a specific paper |
 | `/research read <paper>` | Deep structured analysis with domain expert perspective |
@@ -53,11 +53,10 @@ The router auto-detects relevant categories from paper keywords and classifies t
 
 ## How search works
 
-Three agents run in parallel, each with a 60-second timeout:
+Two agents run in parallel, each with a 60-second timeout:
 
-1. **Semantic Scholar** — relevance search (`s2_search.sh`) + boolean bulk search (`s2_bulk_search.sh`) with year filtering
-2. **AlphaXiv MCP** — embedding similarity + full-text keyword search
-3. **Hugging Face MCP** — `paper_search` semantic search
+1. **Semantic Scholar** — semantic search across 200M+ papers (`s2_search.sh`) + boolean bulk search (`s2_bulk_search.sh`) with year filtering. Primary search source.
+2. **Hugging Face** — `hf papers ls` daily/trending papers filtered by topic keywords. Complements S2 by surfacing recent community-highlighted work that may not yet have citations.
 
 Results are deduplicated by arXiv ID / DOI / title similarity, then scored:
 
@@ -72,7 +71,7 @@ Results are deduplicated by arXiv ID / DOI / title similarity, then scored:
 
 arXiv-only papers with < 100 citations get a -20 penalty. Published versions are preferred.
 
-After scoring, each top paper is **quick-read** (overview via AlphaXiv or abstract) and receives a verdict: Must read / Worth reading / Skim / Skip. A **landscape summary** synthesizes key themes and trends.
+After scoring, each top paper is **quick-read** via `curl https://alphaxiv.org/overview/{id}.md` (or S2 abstract if not on arXiv) and receives a verdict: Must read / Worth reading / Skim / Skip. A **landscape summary** synthesizes key themes and trends.
 
 ## How discussion works
 
@@ -115,10 +114,11 @@ The write phase adds two quality mechanisms:
 ### Claude Code
 
 ```bash
-# Install via plugin marketplace
-claude plugin install research-skill@arsity
+# Option 1: Install via marketplace
+claude plugin marketplace add arsity/research-skill
+claude plugin install research-skill@research-skill
 
-# Or manual install
+# Option 2: Manual install
 git clone https://github.com/arsity/research-skill.git ~/.claude/plugins/research-skill
 ```
 
@@ -137,12 +137,10 @@ git clone https://github.com/arsity/research-skill.git ~/.claude/plugins/researc
    - `Orchestra-Research/AI-Research-SKILLs` — provides `ml-paper-writing`, `brainstorming-research-ideas`, `creative-thinking-for-research`, and 21 domain skill categories
    - A `humanizer` skill for style review during paper writing
 
-**Optional MCP servers:**
-
-- **AlphaXiv MCP** — endpoint `https://api.alphaxiv.org/mcp/v1` (SSE + OAuth 2.0). Gives direct access to paper overviews and full text. Without it, the skill uses `curl` against the public alphaxiv.org endpoints instead.
-- **Hugging Face MCP** — adds HF as a third search source. Without it, discovery runs on S2 + AlphaXiv only.
-
-Without MCP servers, citations and quality evaluation still work. You just get fewer search sources during discovery.
+3. **hf CLI** — for fetching HF daily/trending papers:
+   ```bash
+   curl -LsSf https://hf.co/cli/install.sh | bash -s
+   ```
 
 ## Project structure
 
@@ -239,7 +237,7 @@ On first invocation, `/research` creates `.research-workspace/` in the current d
 | Semantic Scholar | 1 req/sec (with key) | Sequential + batch/bulk endpoints |
 | DBLP | ~1 req/sec | Sequential, 1s delay |
 | CrossRef | 50 req/sec | Polite pool |
-| HF / AlphaXiv MCP | No strict limit | Respectful usage |
+| HF CLI / AlphaXiv curl | No strict limit | Respectful usage |
 
 ## License
 

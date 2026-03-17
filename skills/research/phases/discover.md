@@ -23,9 +23,9 @@ The router returns primary domain categories (top 1-2) + `research-ideation` for
 
 Invoke `research-ideation` skill (`brainstorming-research-ideas`) to generate diversified search queries from the user's topic. This produces multiple angles and keyword variations to improve search coverage.
 
-### Step 3: Parallel search — dispatch three agents
+### Step 3: Parallel search — dispatch two agents
 
-Launch three search agents in parallel. Each has a 60-second timeout. If an agent errors or times out, proceed with results from the others.
+Launch two search agents in parallel. Each has a 60-second timeout. If an agent errors or times out, proceed with results from the other.
 
 **Agent 1: Semantic Scholar**
 
@@ -43,18 +43,15 @@ bash scripts/s2_bulk_search.sh "<query>" "<year_range>" 50
 
 Each result includes `paper_id`, `title`, `year`, `venue`, `citations`, `doi`, `arxiv_id`, `source: "s2"`.
 
-**Agent 2: AlphaXiv MCP**
+**Agent 2: Hugging Face (trending complement)**
 
-Use AlphaXiv MCP tools (if available):
-- `embedding_similarity_search` with the query for semantic search
-- `full_text_papers_search` with key terms for keyword search
+Fetch today's community-highlighted papers and filter by topic keywords:
 
-If AlphaXiv MCP is unavailable, skip this agent (degraded mode).
+```bash
+hf papers ls --format json
+```
 
-**Agent 3: Hugging Face MCP**
-
-Use HF MCP tool:
-- `mcp__claude_ai_Hugging_Face__paper_search` with the query (returns up to 12 results)
+Filter results: match paper title/summary against the user's query keywords. This is NOT a semantic search — it returns recent daily/trending papers only. It complements S2 by surfacing new work with community traction (upvotes, GitHub stars) that may not yet have citations in S2.
 
 ### Step 4: Merge
 
@@ -74,8 +71,8 @@ Normalize all results to a common format:
   "doi": "...",
   "arxiv_id": "...",
   "authors": [{"name": "...", "id": "..."}],
-  "source": "s2|alphaxiv|hf",
-  "found_in": ["s2", "alphaxiv"]
+  "source": "s2|hf",
+  "found_in": ["s2", "hf"]
 }
 ```
 
@@ -126,9 +123,9 @@ For top N papers by composite score (highest first):
 
 **For arXiv papers:**
 
-1. Try AlphaXiv MCP `get_paper_content` (report/overview mode)
-2. If MCP unavailable: `curl -s "https://alphaxiv.org/overview/{arxiv_id}.md"`
-3. If alphaxiv returns 404: use S2 abstract from discover results
+1. `curl -s "https://alphaxiv.org/overview/{arxiv_id}.md"` — structured overview (preferred)
+2. `curl -s "https://alphaxiv.org/abs/{arxiv_id}.md"` — full text (if overview is 404 or more detail needed)
+3. If both return 404: use S2 abstract from discover results
 
 **For non-arXiv papers (conference-only):**
 
@@ -179,7 +176,7 @@ Save results to `.research-workspace/sessions/{topic-slug}-{date}/discover.json`
     "paper_id": "...", "title": "...", "year": 2024, "venue": "...",
     "citations": 123, "doi": "...", "arxiv_id": "...",
     "authors": [{"name": "...", "id": "..."}],
-    "source": "s2|alphaxiv|hf", "found_in": ["s2", "alphaxiv"],
+    "source": "s2|hf", "found_in": ["s2", "hf"],
     "score": 85.3,
     "verdict": "must_read",
     "core_contribution": "...",
