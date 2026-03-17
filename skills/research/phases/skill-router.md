@@ -91,7 +91,7 @@ When only a `topic_description` is available (no structured abstract), all match
 | 16 | Prompt-Engineering | prompt optimization, structured output, constrained generation, prompt programming | dspy, instructor, guidance, outlines |
 | 17 | Observability | LLM observability, tracing, LLM monitoring, evaluation pipeline | langsmith, phoenix |
 | 18 | Multimodal | multimodal, vision-language, VLM, text-to-image, diffusion, image generation, video understanding, speech recognition, audio generation, CLIP, contrastive learning, segmentation, image editing, style transfer, text-to-video, text-to-motion | clip, whisper, llava, stable-diffusion, segment-anything, blip-2, audiocraft |
-| 19 | Emerging-Techniques | mixture of experts, MoE, model merging, long context, context extension, speculative decoding, knowledge distillation, sparsity | moe-training, model-merging, long-context, speculative-decoding, knowledge-distillation, model-pruning |
+| 19 | Emerging-Techniques | mixture of experts, MoE, model merging, long context, context extension, speculative decoding (algorithm-side), knowledge distillation, sparsity | moe-training, model-merging, long-context, speculative-decoding, knowledge-distillation, model-pruning |
 | 20 | ML-Paper-Writing | *Not keyword-triggered — auto-invoked by Write phase* | ml-paper-writing |
 | 21 | Research-Ideation | *Not keyword-triggered — auto-invoked by Discover (search strategy) and Discuss (ideation)* | brainstorming-research-ideas, creative-thinking-for-research |
 

@@ -74,7 +74,7 @@ User selects one → proceed to the requested phase.
 
 ### Domain Override Flags
 
-All commands (except trending) support:
+All commands support:
 - `--domain <cat1,cat2>`: Additive — merge with auto-detected categories
 - `--domain-only <cat1,cat2>`: Exclusive — use only these categories
 

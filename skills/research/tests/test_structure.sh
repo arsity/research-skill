@@ -45,13 +45,13 @@ fi
 echo "[4] Checking for removed command references..."
 if grep -q '/research survey' "$SCRIPT_DIR/SKILL.md" 2>/dev/null; then
   echo "  ✗ SKILL.md still references /research survey (should be removed)"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 else
   echo "  ✓ No /research survey references"
 fi
 if grep -q '/research triage' "$SCRIPT_DIR/SKILL.md" 2>/dev/null; then
   echo "  ✗ SKILL.md still references /research triage (should be removed)"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 else
   echo "  ✓ No /research triage references"
 fi
@@ -128,11 +128,11 @@ if grep -q '/research discuss' "$SCRIPT_DIR/SKILL.md" 2>/dev/null; then
   echo "  ✓ /research discuss in routing table"
 else
   echo "  ✗ /research discuss MISSING from routing table"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 fi
 if grep -q 'triage.md' "$SCRIPT_DIR/SKILL.md" 2>/dev/null; then
   echo "  ✗ SKILL.md still references triage.md"
-  ((ERRORS++))
+  ERRORS=$((ERRORS + 1))
 else
   echo "  ✓ No triage.md references in SKILL.md"
 fi
