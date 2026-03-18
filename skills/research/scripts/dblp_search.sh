@@ -20,20 +20,20 @@ rate_limit "$DBLP_RATE_LIMIT_FILE" "$DBLP_MIN_INTERVAL"
 ENCODED_QUERY=$(printf '%s' "$QUERY" | jq -sRr @uri)
 API_URL="https://dblp.org/search/publ/api"
 
-RESPONSE=$(curl -sL \
+RESPONSE=$(curl -sL -w "\n%{http_code}" \
     "${API_URL}?q=${ENCODED_QUERY}&format=json&h=${LIMIT}" \
     --max-time 30 2>/dev/null)
 
-if [[ -z "$RESPONSE" ]]; then
-    echo '{"error": "DBLP request failed"}' >&2
-    exit 1
-fi
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+BODY=$(echo "$RESPONSE" | sed '$d')
 
-TOTAL=$(echo "$RESPONSE" | jq -r '.result.hits["@total"] // "0"')
-if [[ "$TOTAL" == "0" ]]; then
-    echo '{"info": "No DBLP results found"}' >&2
-else
-    echo "$RESPONSE" | jq '.result.hits.hit[]? | {
+case "$HTTP_CODE" in
+    200)
+        TOTAL=$(echo "$BODY" | jq -r '.result.hits["@total"] // "0"')
+        if [[ "$TOTAL" == "0" ]]; then
+            echo '{"info": "No DBLP results found"}' >&2
+        else
+            echo "$BODY" | jq '.result.hits.hit[]? | {
         dblp_key: .info.key,
         title: .info.title,
         year: (.info.year | tonumber? // null),
@@ -47,4 +47,14 @@ else
         url: .info.url,
         source: "dblp"
     }'
-fi
+        fi
+        ;;
+    429)
+        echo '{"error": "DBLP rate limit exceeded."}' >&2
+        exit 1
+        ;;
+    *)
+        echo "{\"error\": \"DBLP HTTP $HTTP_CODE\"}" >&2
+        exit 1
+        ;;
+esac

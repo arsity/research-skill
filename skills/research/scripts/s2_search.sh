@@ -37,8 +37,13 @@ BODY=$(echo "$RESPONSE" | sed '$d')
 
 case "$HTTP_CODE" in
     200)
+        TOTAL=$(echo "$BODY" | jq -r '.total // 0')
+        if [[ "$TOTAL" == "0" ]]; then
+            echo '{"info": "No S2 results found"}' >&2
+            exit 0
+        fi
         echo "$BODY" | jq --arg threshold "$ARXIV_CITATION_THRESHOLD" '.data[]? |
-            (.venue // .journal // "") as $venue |
+            ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A") as $venue |
             ($venue | test("(?i)arxiv")) as $is_arxiv |
             (if $is_arxiv and .citationCount < ($threshold | tonumber) then "caution"
              elif $is_arxiv and .citationCount >= ($threshold | tonumber) then "recommended"
@@ -47,7 +52,7 @@ case "$HTTP_CODE" in
                 paper_id: .paperId,
                 title: .title,
                 year: .year,
-                venue: ($venue // "N/A"),
+                venue: $venue,
                 citations: .citationCount,
                 doi: .externalIds.DOI,
                 arxiv_id: .externalIds.ArXiv,

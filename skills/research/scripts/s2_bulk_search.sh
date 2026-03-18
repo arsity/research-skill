@@ -39,11 +39,15 @@ BODY=$(echo "$RESPONSE" | sed '$d')
 case "$HTTP_CODE" in
     200)
         TOTAL=$(echo "$BODY" | jq -r '.total // 0')
+        if [[ "$TOTAL" == "0" ]]; then
+            echo '{"info": "No S2 bulk results found"}' >&2
+            exit 0
+        fi
         RETURNED=$(echo "$BODY" | jq -r '.data | length')
         echo "{\"total\": $TOTAL, \"returned\": $RETURNED}" >&2
 
         echo "$BODY" | jq --arg threshold "$ARXIV_CITATION_THRESHOLD" --argjson req_limit "$LIMIT" '.data[:$req_limit][]? |
-            (.venue // .journal // "") as $venue |
+            ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A") as $venue |
             ($venue | test("(?i)arxiv")) as $is_arxiv |
             (if $is_arxiv and .citationCount < ($threshold | tonumber) then "caution"
              elif $is_arxiv and .citationCount >= ($threshold | tonumber) then "recommended"
@@ -52,7 +56,7 @@ case "$HTTP_CODE" in
                 paper_id: .paperId,
                 title: .title,
                 year: .year,
-                venue: ($venue // "N/A"),
+                venue: $venue,
                 citations: .citationCount,
                 doi: .externalIds.DOI,
                 arxiv_id: .externalIds.ArXiv,

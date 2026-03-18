@@ -4,18 +4,36 @@
 
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/init.sh"
+
 LIMIT="${1:-20}"
 
-RESPONSE=$(curl -sL \
+RESPONSE=$(curl -sL -w "\n%{http_code}" \
     "https://huggingface.co/api/daily_papers" \
     --max-time 60 2>/dev/null)
 
-if [[ -z "$RESPONSE" ]]; then
-    echo '{"error": "HF daily papers request failed"}' >&2
-    exit 1
-fi
+HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+BODY=$(echo "$RESPONSE" | sed '$d')
 
-echo "$RESPONSE" | jq --argjson limit "$LIMIT" '.[:$limit][] | {
+case "$HTTP_CODE" in
+    200)
+        if [[ -z "$BODY" ]]; then
+            echo '{"error": "HF daily papers returned empty response"}' >&2
+            exit 1
+        fi
+        ;;
+    429)
+        echo '{"error": "HF rate limit exceeded."}' >&2
+        exit 1
+        ;;
+    *)
+        echo "{\"error\": \"HF daily papers HTTP $HTTP_CODE\"}" >&2
+        exit 1
+        ;;
+esac
+
+echo "$BODY" | jq --argjson limit "$LIMIT" '.[:$limit][] | {
     title: .paper.title,
     arxiv_id: .paper.id,
     summary: (.paper.summary // "")[:300],

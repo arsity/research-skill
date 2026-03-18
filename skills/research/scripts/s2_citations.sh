@@ -36,7 +36,7 @@ case "$HTTP_CODE" in
     200)
         echo "$BODY" | jq --arg threshold "$ARXIV_CITATION_THRESHOLD" '.data[]?.citingPaper |
             select(.paperId != null) |
-            (.venue // .journal // "") as $venue |
+            ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A") as $venue |
             ($venue | test("(?i)arxiv")) as $is_arxiv |
             (if $is_arxiv and .citationCount < ($threshold | tonumber) then "caution"
              elif $is_arxiv and .citationCount >= ($threshold | tonumber) then "recommended"
@@ -45,7 +45,7 @@ case "$HTTP_CODE" in
                 paper_id: .paperId,
                 title: .title,
                 year: .year,
-                venue: ($venue // "N/A"),
+                venue: $venue,
                 citations: .citationCount,
                 doi: .externalIds.DOI,
                 arxiv_id: .externalIds.ArXiv,

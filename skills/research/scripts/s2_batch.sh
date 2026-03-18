@@ -49,7 +49,7 @@ for ((i=0; i<${#IDS[@]}; i+=CHUNK_SIZE)); do
     case "$HTTP_CODE" in
         200)
             echo "$BODY" | jq --arg threshold "$ARXIV_CITATION_THRESHOLD" '.[]? | select(. != null) |
-                (.venue // .journal // "") as $venue |
+                ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A") as $venue |
                 ($venue | test("(?i)arxiv")) as $is_arxiv |
                 (if $is_arxiv and .citationCount < ($threshold | tonumber) then "caution"
                  elif $is_arxiv and .citationCount >= ($threshold | tonumber) then "recommended"
@@ -58,7 +58,7 @@ for ((i=0; i<${#IDS[@]}; i+=CHUNK_SIZE)); do
                     paper_id: .paperId,
                     title: .title,
                     year: .year,
-                    venue: ($venue // "N/A"),
+                    venue: $venue,
                     citations: .citationCount,
                     doi: .externalIds.DOI,
                     arxiv_id: .externalIds.ArXiv,
