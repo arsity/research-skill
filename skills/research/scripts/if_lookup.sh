@@ -20,9 +20,15 @@ if [[ ! -f "$DB_FILE" ]]; then
     exit 1
 fi
 
-sqlite3 "$DB_FILE" -json \
+RESULT=$(sqlite3 "$DB_FILE" -json \
     "SELECT journal, factor, jcr, zky
      FROM factor
      WHERE journal LIKE '%${NAME}%'
      ORDER BY factor DESC
-     LIMIT 5;" 2>/dev/null | jq '.[]?' || echo '[]'
+     LIMIT 5;" 2>/dev/null)
+
+if [[ -z "$RESULT" || "$RESULT" == "[]" ]]; then
+    echo "{\"info\": \"No impact factor entries matching '$NAME'\"}" >&2
+else
+    echo "$RESULT" | jq '.[]?'
+fi

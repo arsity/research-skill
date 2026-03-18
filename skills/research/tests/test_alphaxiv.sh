@@ -4,7 +4,7 @@
 
 set -e
 PASS=0; FAIL=0
-PAPER_ID="2401.10891"  # well-known paper, stable on alphaxiv
+PAPER_ID="2401.10891"  # Depth Anything paper, stable on alphaxiv
 
 check() {
     local desc="$1" result="$2" expected="$3"
@@ -36,7 +36,7 @@ else
 fi
 
 echo "Test 4: overview content contains paper title keywords..."
-if echo "$CONTENT" | grep -qi "mixtral\|moe\|mixture\|expert"; then
+if echo "$CONTENT" | grep -qi "depth\|anything\|unlabeled\|monocular"; then
     echo "  PASS: Content matches expected paper"
     PASS=$((PASS + 1))
 else

@@ -20,7 +20,7 @@ rate_limit "$DBLP_RATE_LIMIT_FILE" "$DBLP_MIN_INTERVAL"
 ENCODED_QUERY=$(printf '%s' "$QUERY" | jq -sRr @uri)
 API_URL="https://dblp.org/search/publ/api"
 
-RESPONSE=$(curl -s \
+RESPONSE=$(curl -sL \
     "${API_URL}?q=${ENCODED_QUERY}&format=json&h=${LIMIT}" \
     --max-time 30 2>/dev/null)
 
@@ -29,17 +29,22 @@ if [[ -z "$RESPONSE" ]]; then
     exit 1
 fi
 
-echo "$RESPONSE" | jq '.result.hits.hit[]? | {
-    dblp_key: .info.key,
-    title: .info.title,
-    year: (.info.year | tonumber? // null),
-    venue: .info.venue,
-    authors: (if .info.authors.author | type == "array" then
-        [.info.authors.author[]? | .text][:3]
-    else
-        [.info.authors.author.text // "N/A"]
-    end),
-    doi: .info.doi,
-    url: .info.url,
-    source: "dblp"
-}'
+TOTAL=$(echo "$RESPONSE" | jq -r '.result.hits["@total"] // "0"')
+if [[ "$TOTAL" == "0" ]]; then
+    echo '{"info": "No DBLP results found"}' >&2
+else
+    echo "$RESPONSE" | jq '.result.hits.hit[]? | {
+        dblp_key: .info.key,
+        title: .info.title,
+        year: (.info.year | tonumber? // null),
+        venue: .info.venue,
+        authors: (if .info.authors.author | type == "array" then
+            [.info.authors.author[]? | .text][:3]
+        else
+            [.info.authors.author.text // "N/A"]
+        end),
+        doi: .info.doi,
+        url: .info.url,
+        source: "dblp"
+    }'
+fi

@@ -5,8 +5,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPTS="$SCRIPT_DIR/../scripts"
 PASS=0; FAIL=0
 
-# ResNet paper ID
-RESNET_ID="649def34f8be52c8b66281af98ae884c09aef38b"
+# ResNet paper ID (verified via s2_match.sh)
+RESNET_ID="2c03df8b48bf3fa39054345bafabfeff15bfd11d"
 
 # Test 1: Citations returns results
 echo "Test 1: s2_citations returns results..."

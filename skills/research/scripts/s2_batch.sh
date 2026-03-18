@@ -36,7 +36,7 @@ for ((i=0; i<${#IDS[@]}; i+=CHUNK_SIZE)); do
 
     rate_limit "$S2_RATE_LIMIT_FILE" "$S2_MIN_INTERVAL"
 
-    RESPONSE=$(curl -s -w "\n%{http_code}" \
+    RESPONSE=$(curl -sL -w "\n%{http_code}" \
         -X POST "$API_URL?fields=$FIELDS" \
         -H "Content-Type: application/json" \
         ${S2_API_KEY:+-H "x-api-key: $S2_API_KEY"} \

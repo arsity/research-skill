@@ -28,7 +28,7 @@ if [[ -n "$YEAR_RANGE" ]]; then
     PARAMS="${PARAMS}&year=${YEAR_RANGE}"
 fi
 
-RESPONSE=$(curl -s -w "\n%{http_code}" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" \
     "${API_URL}?${PARAMS}" \
     ${S2_API_KEY:+-H "x-api-key: $S2_API_KEY"} \
     --max-time 60 2>/dev/null)

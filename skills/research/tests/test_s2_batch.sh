@@ -7,7 +7,7 @@ PASS=0; FAIL=0
 
 # Test 1: Fetch metadata for known paper IDs (ResNet, BERT)
 echo "Test 1: Batch fetch 2 known papers..."
-RESULT=$("$SCRIPTS/s2_batch.sh" "649def34f8be52c8b66281af98ae884c09aef38b" "df2b0e26d0599ce3e70df8a9da02e51594e0e992")
+RESULT=$("$SCRIPTS/s2_batch.sh" "2c03df8b48bf3fa39054345bafabfeff15bfd11d" "df2b0e26d0599ce3e70df8a9da02e51594e0e992")
 COUNT=$(echo "$RESULT" | jq -s 'length')
 if [[ "$COUNT" -eq 2 ]]; then
     echo "  PASS: Got $COUNT papers"

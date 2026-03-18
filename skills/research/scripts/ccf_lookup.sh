@@ -20,9 +20,15 @@ if [[ ! -f "$DB_FILE" ]]; then
     exit 1
 fi
 
-sqlite3 "$DB_FILE" -json \
+RESULT=$(sqlite3 "$DB_FILE" -json \
     "SELECT acronym, name, rank, field, type, publisher, url
      FROM ccf_2026
      WHERE acronym_alnum LIKE '%${NAME}%'
         OR name LIKE '%${NAME}%'
-     LIMIT 5;" 2>/dev/null | jq '.[]?' || echo '[]'
+     LIMIT 5;" 2>/dev/null)
+
+if [[ -z "$RESULT" || "$RESULT" == "[]" ]]; then
+    echo "{\"info\": \"No CCF entries matching '$NAME'\"}" >&2
+else
+    echo "$RESULT" | jq '.[]?'
+fi

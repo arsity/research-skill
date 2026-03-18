@@ -6,7 +6,7 @@ set -e
 
 LIMIT="${1:-20}"
 
-RESPONSE=$(curl -s \
+RESPONSE=$(curl -sL \
     "https://huggingface.co/api/daily_papers" \
     --max-time 60 2>/dev/null)
 

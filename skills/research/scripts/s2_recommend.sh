@@ -30,7 +30,7 @@ rate_limit "$S2_RATE_LIMIT_FILE" "$S2_MIN_INTERVAL"
 FIELDS="paperId,title,year,authors,venue,journal,citationCount,externalIds,url,abstract"
 API_URL="https://api.semanticscholar.org/recommendations/v1/papers/"
 
-RESPONSE=$(curl -s -w "\n%{http_code}" \
+RESPONSE=$(curl -sL -w "\n%{http_code}" \
     -X POST "${API_URL}?fields=${FIELDS}&limit=${LIMIT}" \
     -H "Content-Type: application/json" \
     ${S2_API_KEY:+-H "x-api-key: $S2_API_KEY"} \

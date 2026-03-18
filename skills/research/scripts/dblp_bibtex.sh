@@ -16,7 +16,7 @@ fi
 
 rate_limit "$DBLP_RATE_LIMIT_FILE" "$DBLP_MIN_INTERVAL"
 
-RESPONSE=$(curl -s \
+RESPONSE=$(curl -sL \
     "https://dblp.org/rec/${DBLP_KEY}.bib" \
     --max-time 30 2>/dev/null)
 

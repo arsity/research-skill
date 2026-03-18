@@ -16,7 +16,7 @@ ENCODED_QUERY=$(printf '%s' "$QUERY" | jq -sRr @uri)
 API_URL="https://api.crossref.org/works"
 FIELDS="DOI,title,author,published-print,published-online,container-title,is-referenced-by-count,URL"
 
-RESPONSE=$(curl -s \
+RESPONSE=$(curl -sL \
     "${API_URL}?query=${ENCODED_QUERY}&rows=${LIMIT}&select=${FIELDS}" \
     --max-time 30 2>/dev/null)
 
