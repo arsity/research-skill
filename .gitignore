@@ -1,6 +1,9 @@
 # Secrets
 skills/research/.env
 
+# Internal dev specs/plans (not for public repo)
+docs/superpowers/
+
 # macOS
 .DS_Store
 
