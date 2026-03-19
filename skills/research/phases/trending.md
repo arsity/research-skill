@@ -72,6 +72,10 @@ Group by tier with headers:
 - **Potentially interesting**
 - **Other trending papers**
 
+### Step 4.5: Checkpoint
+
+Write checkpoint to `checkpoints/trending_{timestamp}.json` with status `completed`. Include: number of papers by tier (high/medium/low), domain skills invoked, date.
+
 ### Step 5: Follow-up options
 
 After presenting the digest:

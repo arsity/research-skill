@@ -73,6 +73,16 @@ bash scripts/venue_info.sh "<venue>"
 bash scripts/author_info.sh "<first_author_id>"
 ```
 
+### Step 3.5: Verification gate (`superpowers:verification-before-completion`)
+
+Before outputting any BibTeX, invoke `superpowers:verification-before-completion` to confirm:
+- Every BibTeX entry has all required fields populated from an API response (author, title, year, venue/booktitle/journal)
+- The `source_tag` is set (no untagged entries)
+- No field was filled from model memory — every value traces to a DBLP/CrossRef/S2 API call
+- If source is "via S2", the manual-verify warning is attached
+
+If any check fails, loop back to Step 2 to retry the next source in the chain. If the entire chain is exhausted, report failure — do not fabricate.
+
 ### Step 4: Output format
 
 For each citation:
@@ -109,6 +119,10 @@ Update cite log at `.research-workspace/sessions/{slug}/cite/cite-log.json`:
   ]
 }
 ```
+
+### Step 5.5: Checkpoint
+
+Write checkpoint to `checkpoints/cite_{paper_id}_{timestamp}.json` with status `completed`, referencing the `.bib` file as the primary artifact. Include: paper_id, source_tag, bibtex_key.
 
 ### Step 6: Batch citation mode
 

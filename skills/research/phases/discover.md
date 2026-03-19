@@ -23,9 +23,9 @@ The router returns primary domain categories (top 1-2) + `research-ideation` for
 
 Invoke `research-ideation` skill (`brainstorming-research-ideas`) to generate diversified search queries from the user's topic. This produces multiple angles and keyword variations to improve search coverage.
 
-### Step 3: Parallel search — dispatch two agents
+### Step 3: Parallel search — dispatch via `superpowers:dispatching-parallel-agents`
 
-Launch two search agents in parallel. Each has a 60-second timeout. If an agent errors or times out, proceed with results from the other.
+Invoke `superpowers:dispatching-parallel-agents` to launch two independent search agents. Each has a 60-second timeout. If an agent errors or times out, proceed with results from the other.
 
 **Agent 1: Semantic Scholar**
 
@@ -52,6 +52,8 @@ hf papers ls --format json
 ```
 
 Filter results: match paper title/summary against the user's query keywords. This is NOT a semantic search — it returns recent daily/trending papers only. It complements S2 by surfacing new work with community traction (upvotes, GitHub stars) that may not yet have citations in S2.
+
+**Why `superpowers:dispatching-parallel-agents`**: The two agents are fully independent (no shared state, different APIs), making them ideal for parallel dispatch. The superpowers skill handles agent lifecycle, timeout enforcement, and partial-failure aggregation — no need to reimplement this logic.
 
 ### Step 4: Merge
 
@@ -117,30 +119,44 @@ For each paper in the merged list:
    total      = base_score + weighted + penalty
    ```
 
-### Step 6: Quick-read (absorbed from triage)
+### Step 6: Quick-read (cache-aware)
 
 For top N papers by composite score (highest first):
 
-**For arXiv papers:**
+**Check cache first**: For each paper, check `.research-workspace/sessions/{slug}/cache/{paper_id}/cache_meta.json`. If `overview.md` is cached, use it directly. See Paper Cache in SKILL.md.
 
-1. `curl -sL "https://alphaxiv.org/overview/{arxiv_id}.md"` — structured overview (preferred)
-2. `curl -sL "https://alphaxiv.org/abs/{arxiv_id}.md"` — full text (if overview is 404 or more detail needed)
+**On cache miss for arXiv papers:**
+
+1. `curl -sL "https://alphaxiv.org/overview/{arxiv_id}.md"` → save to `cache/{paper_id}/overview.md`
+2. `curl -sL "https://alphaxiv.org/abs/{arxiv_id}.md"` → save to `cache/{paper_id}/fulltext.md` (if overview is 404 or more detail needed)
 3. If both return 404: use S2 abstract from discover results
 
-**For non-arXiv papers (conference-only):**
+**On cache miss for non-arXiv papers (conference-only):**
 
 1. Check S2 `openAccessPdf` URL from discover results
-2. If available: download and read the PDF directly
+2. If available: download and read the PDF → save to `cache/{paper_id}/paper.pdf`
 3. If not: resolve DOI to publisher page:
    - CVF Open Access for CVPR/ICCV/ECCV papers
    - ACM Digital Library for ACM papers
    - IEEE Xplore for IEEE papers
 4. Read the paper's abstract and introduction
 
+Update `cache_meta.json` after each fetch. Skip full OpenReview fetch during quick-read (too heavy for batch processing).
+
 For each paper, generate:
 - **Core contribution**: one sentence summarizing what this paper adds
 - **Read recommendation**: "Must read" / "Worth reading" / "Skim" / "Skip"
 - **Domain assessment**: invoke matched domain skill (from Step 1's router result) for domain-specific relevance assessment
+
+### Step 6.5: Verification gate (`superpowers:verification-before-completion`)
+
+Before presenting results to the user, invoke `superpowers:verification-before-completion` to confirm:
+- Every paper in the output has a composite score (no missing quality evaluations)
+- No duplicate papers slipped through deduplication (re-check arXiv ID / DOI / title overlap)
+- Core contribution and read recommendation are populated for all quick-read papers
+- At least one search source returned results (if both returned 0, trigger PUA escalation per Iron Rule)
+
+Only proceed to presentation after all checks pass.
 
 ### Step 7: Present ranked results
 
@@ -184,6 +200,10 @@ Save results to `.research-workspace/sessions/{topic-slug}-{date}/discover.json`
   }]
 }
 ```
+
+### Step 9.5: Checkpoint
+
+Write checkpoint to `checkpoints/discover_{timestamp}.json` with status `completed`, referencing `discover.json` as the primary artifact. Include: query, total papers found, number of must-read/worth-reading/skim/skip verdicts, skills invoked.
 
 ### Step 10: Expansion options
 

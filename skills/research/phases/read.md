@@ -24,20 +24,31 @@ After resolving the paper's identity, invoke the skill router:
 
 The router returns primary domain skills. These are loaded and provide expert perspective during analysis (Step 5).
 
-### Step 2: Fetch full paper content
+### Step 2: Fetch full paper content (cache-aware)
 
-Follow this fallback chain (stop at the first that provides sufficient content):
+**Check cache first**: Look for `.research-workspace/sessions/{slug}/cache/{paper_id}/cache_meta.json`. If cached content exists with `status: "cached"`, read from local files instead of re-fetching. See Paper Cache in SKILL.md.
 
-1. **AlphaXiv overview** — `curl -sL "https://alphaxiv.org/overview/{ID}.md"` — structured AI-generated overview, optimized for LLM consumption
-2. **AlphaXiv full text** — `curl -sL "https://alphaxiv.org/abs/{ID}.md"` — full extracted paper text (use if overview is 404 or lacks needed detail)
-3. **arXiv PDF** — download from `https://arxiv.org/pdf/{ID}` and read directly (if both alphaxiv endpoints return 404)
+**On cache miss**, follow this fallback chain (stop at the first that provides sufficient content). **Save each fetched item to cache** as it's obtained:
+
+1. **AlphaXiv overview** — `curl -sL "https://alphaxiv.org/overview/{ID}.md"` → save to `cache/{paper_id}/overview.md`
+2. **AlphaXiv full text** — `curl -sL "https://alphaxiv.org/abs/{ID}.md"` → save to `cache/{paper_id}/fulltext.md`
+3. **arXiv PDF** — download from `https://arxiv.org/pdf/{ID}` → save to `cache/{paper_id}/paper.pdf`
 4. **Conference/publisher PDF** — for non-arXiv papers:
    - S2 `openAccessPdf` field
    - CVF Open Access (CVPR/ICCV/ECCV)
    - ACM Digital Library
    - IEEE Xplore
+   → save to `cache/{paper_id}/paper.pdf`
+
+Update `cache_meta.json` after each fetch attempt (including 404s).
 
 **Never use AlphaXiv's `answer_pdf_queries`** — we do not control their model.
+
+### Step 2.5: Fetch OpenReview records (cache-aware)
+
+If the paper's venue uses OpenReview (see Paper Cache in SKILL.md for known venues), check cache for `openreview/reviews.json`. On cache miss, attempt to fetch from OpenReview API per the Paper Cache protocol. Save reviews, rebuttals, and meta-reviews.
+
+This is non-blocking: if OpenReview fetch fails, proceed with the read. But if available, OpenReview data is extremely valuable — real reviewer concerns are more authoritative than any simulated review.
 
 ### Step 3: Appendix / supplementary material
 
@@ -94,6 +105,8 @@ Save to `.research-workspace/sessions/{slug}/read/{paper_id}.json`:
   "paper_id": "...",
   "title": "...",
   "content_source": "alphaxiv_overview|alphaxiv_abs|arxiv_pdf|publisher_pdf",
+  "cache_path": "cache/{paper_id}/",
+  "has_openreview": true,
   "skills_invoked": ["multimodal:clip", "fine-tuning:peft"],
   "analysis": {
     "research_question": "...",
@@ -104,6 +117,10 @@ Save to `.research-workspace/sessions/{slug}/read/{paper_id}.json`:
   }
 }
 ```
+
+### Step 6.5: Checkpoint
+
+Write checkpoint to `checkpoints/read_{paper_id}_{timestamp}.json` with status `completed`, referencing `read/{paper_id}.json` as the primary artifact. Include: paper_id, content_source, skills invoked.
 
 ### Step 7: Follow-up options
 

@@ -102,11 +102,39 @@ If the section being written is `abstract` or `introduction`, auto-trigger three
 - Is this the simplest, most elegant formulation of the contribution?
 - Output: 2-3 specific revision suggestions pointing to concrete sentences.
 
-Present all suggestions to user. User decides which to adopt. Optional re-run after revision.
+**Cross-model adversarial review** (framing gate):
+After the three perspectives above, invoke `mcp__codex__codex` per Cross-Model Collaboration #9 in SKILL.md. Send:
+- The draft abstract or introduction text
+- The research brief from discuss phase (if available)
 
-### Step 5.6: Consistency Check (method, experiments, conclusion)
+Ask: "As an AC at {target venue}: (1) Does the motivation hold up? (2) Is the contribution clearly distinguished from prior work? (3) What would make you desk-reject this?"
 
-If the section being written is `method`, `experiments`, or `conclusion`, run a lightweight structural cross-reference scan against existing draft sections:
+Present cross-model concerns labeled `[Cross-model review]` alongside the three Claude perspectives. If Codex MCP is unavailable, skip and proceed.
+
+Present all suggestions (Claude's three perspectives + cross-model) to user. User decides which to adopt. Optional re-run after revision.
+
+### Step 5.6: Related Work Coverage & Fairness Check (related-work only)
+
+If the section being written is `related-work`, auto-trigger a coverage and fairness review:
+
+**Claude's check**:
+- Cross-reference all papers cited in related-work against discover results and read analyses — are key papers from the landscape missing?
+- For each cited paper: is the characterization accurate based on read analysis? Is the comparison fair?
+- Is our contribution's positioning honest and precise (not overselling delta over prior work)?
+
+**Codex coverage check** (adversarial mode):
+Invoke `mcp__codex__codex` per Cross-Model Collaboration #10 in SKILL.md. Send the draft related-work section + discover results + read analyses. Ask:
+- "What important related work is missing?"
+- "Is any prior work mischaracterized or unfairly compared?"
+- "Is the positioning of the contribution honest and precise?"
+
+If Codex MCP is unavailable, proceed with Claude-only coverage check (log warning).
+
+Present both checks to the user (or Claude-only if Codex unavailable). Missing references flagged by either model should be investigated (quick-read + cite if confirmed relevant).
+
+### Step 5.65: Consistency Check (method, experiments, conclusion)
+
+If the section being written is `method`, `experiments`, `conclusion`, or `discussion`, run a lightweight structural cross-reference scan against existing draft sections:
 
 - Introduction lists N contributions → does experiments have a corresponding table/figure for each?
 - Method assumes specific input format → does the dataset actually provide that format?
@@ -115,6 +143,18 @@ If the section being written is `method`, `experiments`, or `conclusion`, run a 
 - Method's assumptions match experiment setup (e.g., "RGB-IR pair" input → dataset provides IR)
 
 Flag inconsistencies for user to resolve. Do not auto-fix — the user decides which side to change.
+
+### Step 5.7: Verification gate (`superpowers:verification-before-completion`)
+
+Before presenting the section to the user, invoke `superpowers:verification-before-completion` to confirm:
+- Every `\cite{key}` in the text has a corresponding verified BibTeX entry (cross-check against cite-log)
+- No quantitative claim (numbers, percentages, rankings) lacks a traceable source (paper ID or API response)
+- The humanizer pass was actually applied (not skipped)
+- If abstract/introduction: the triple review gate was completed; cross-model framing gate was completed OR skipped due to Codex unavailability (with warning logged)
+- If related-work: the coverage & fairness check was completed (Claude-only is acceptable if Codex is unavailable, with warning logged)
+- If method/experiments/conclusion/discussion: the consistency check was completed
+
+Only proceed to presentation after all checks pass. If citation verification fails for >30% of references, trigger PUA escalation per Iron Rule.
 
 ### Step 6: Present to user
 
@@ -138,6 +178,8 @@ If Markdown:
 
 If Notion:
 - Use Notion MCP to create/update a page with the section content
+
+**Checkpoint**: After Step 7 completes, write checkpoint to `checkpoints/write_{section}_{timestamp}.json` capturing: section name, output format, citations used (with source tags), whether triple review / cross-model review / consistency check were applied, and any flagged issues.
 
 ## Supported Sections
 
