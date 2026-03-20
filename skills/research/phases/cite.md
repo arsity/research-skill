@@ -27,13 +27,23 @@ Use unified input parsing (defined in SKILL.md):
 Execute in order. Stop at the first success.
 
 ```
-1. DBLP (highest quality)
+1. DBLP (highest quality for published papers)
    → dblp_search.sh "<title>" 5
    → Check top result: tokenize both titles (split whitespace, lowercase)
    → If token overlap > 90% (intersection/union): confirmed match
    → If multiple results > 90%: prefer matching year + first author
-   → dblp_bibtex.sh "<matched_title>" "<first_author_surname>" "<year>"
-   → Tag: "via DBLP"
+   → Check matched result's venue:
+     • If venue is "CoRR" (arXiv-only): skip DBLP BibTeX, go to step 1b
+     • Otherwise: dblp_bibtex.sh "<matched_title>" "<first_author_surname>" "<year>"
+       → Tag: "via DBLP"
+
+1b. arXiv (for arXiv-only papers — replaces DBLP's CoRR entries)
+   → Extract arXiv ID from: user input, DBLP volume field (abs/XXXX.XXXXX),
+     or S2 externalIds.ArXiv
+   → arxiv_bibtex.sh "<arxiv_id>"
+   → Tag: "via arXiv"
+   → Also reachable directly if user input is an arXiv ID and no published
+     version exists in DBLP
 
 2. CrossRef (DOI-based)
    → If DOI known: doi2bibtex.sh "<doi>"
@@ -42,7 +52,9 @@ Execute in order. Stop at the first success.
 
 3. S2 (last resort, less reliable)
    → s2_match.sh "<title>"
-   → Construct BibTeX from S2 metadata (paperId, title, year, venue, authors)
+   → If S2 result has externalIds.ArXiv and no published venue:
+     → arxiv_bibtex.sh "<arxiv_id>" → Tag: "via arXiv"
+   → Otherwise: construct BibTeX from S2 metadata
    → Tag: "via S2 — verify manually"
    → ⚠️ S2 metadata may have venue name inconsistencies or missing page numbers
 

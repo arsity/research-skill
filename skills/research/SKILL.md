@@ -316,6 +316,7 @@ All scripts are in `skills/research/scripts/`. Key scripts:
 | `s2_match.sh` | Exact title match (single result) |
 | `dblp_search.sh` | DBLP publication search |
 | `dblp_bibtex.sh` | Fetch condensed BibTeX via DBLP search API (title + author + year) |
+| `arxiv_bibtex.sh` | Fetch @misc BibTeX from arxiv.org (arXiv ID) |
 | `crossref_search.sh` | CrossRef search (fallback) |
 | `doi2bibtex.sh` | DOI → BibTeX via content negotiation |
 | `hf_daily_papers.sh` | HF trending papers |

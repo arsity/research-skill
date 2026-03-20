@@ -94,9 +94,11 @@ Output: a structured **research brief** (`brief.json`) that feeds into the write
 Zero hallucination policy. Every BibTeX entry must trace to an API response. The chain:
 
 ```
-1. DBLP search → title match (>90% token overlap) → fetch .bib        → "via DBLP"
+1. DBLP search → title match (>90% token overlap)
+   → If published venue: fetch condensed .bib                          → "via DBLP"
+   → If arXiv-only (CoRR): fetch from arxiv.org instead               → "via arXiv"
 2. CrossRef search → extract DOI → content negotiation                 → "via CrossRef"
-3. S2 exact match → construct from metadata                            → "via S2 — verify manually"
+3. S2 exact match → construct from metadata (or arXiv if available)    → "via S2 — verify manually"
 4. All fail → "Citation source not verified. Not safe to cite."
 ```
 
@@ -158,7 +160,7 @@ skills/research/
     cite.md                 # DBLP > CrossRef > S2 BibTeX chain
     write.md                # Paper writing with Triple Review Gate + Consistency Check
     trending.md             # Personalized trending digest with domain insights
-  scripts/                  # 18 self-contained bash scripts
+  scripts/                  # 19 self-contained bash scripts
     init.sh                 # Rate limit helpers, DBLP host fallback
     s2_search.sh            # S2 relevance-ranked search
     s2_bulk_search.sh       # S2 boolean bulk search with year filtering
@@ -170,6 +172,7 @@ skills/research/
     s2_match.sh             # Exact title match
     dblp_search.sh          # DBLP publication search
     dblp_bibtex.sh          # Title+author+year → condensed .bib via DBLP API
+    arxiv_bibtex.sh         # arXiv ID → @misc .bib from arxiv.org
     crossref_search.sh      # CrossRef search
     doi2bibtex.sh           # DOI → BibTeX via content negotiation
     hf_daily_papers.sh      # HF trending papers API
