@@ -105,7 +105,7 @@ For papers published at venues that use OpenReview (ICLR, NeurIPS, ICML, and oth
 
 **Authentication required**: The OpenReview API requires a Bearer token. Obtain via `POST https://api2.openreview.net/login` with username/password, or use the `openreview-py` Python client. If no OpenReview credentials are configured, skip OpenReview fetch entirely (log warning, set `status: "no_credentials"`).
 
-**Credentials config**: Set `OPENREVIEW_USER` and `OPENREVIEW_PASS` in `.claude/settings.local.json` under `"env"`. These are optional — the entire OpenReview integration is a best-effort enhancement.
+**Credentials config**: Set `OPENREVIEW_USER` and `OPENREVIEW_PASS` in `.claude/settings.json` under `"env"`. These are optional — the entire OpenReview integration is a best-effort enhancement.
 
 **Fetch flow** (when credentials are available):
 
@@ -417,10 +417,10 @@ All scripts are in `skills/research/scripts/`. Key scripts:
 - **Codex MCP** (`mcp__codex__codex`) — cross-model collaboration throughout the lifecycle (discuss Phases 2-9, write Step 5.5 + 5.6). See Cross-Model Collaboration section for all 10 invocation points. If Codex MCP is unavailable, all phases proceed with Claude-only analysis (log warning).
 
 ### Required API keys
-- **Semantic Scholar**: set `S2_API_KEY` in `.claude/settings.local.json` under `"env"`. Get from: https://www.semanticscholar.org/product/api/api-key
+- **Semantic Scholar**: set `S2_API_KEY` in `.claude/settings.json` under `"env"`. Claude Code automatically exports it as `$S2_API_KEY`. Get from: https://www.semanticscholar.org/product/api/api-key
 
 ### Optional API credentials
-- **OpenReview**: set `OPENREVIEW_USER` and `OPENREVIEW_PASS` in `.claude/settings.local.json` under `"env"`. Register at: https://openreview.net/profile. Without these, OpenReview review/rebuttal data will not be fetched (all other features work normally).
+- **OpenReview**: set `OPENREVIEW_USER` and `OPENREVIEW_PASS` in `.claude/settings.json` under `"env"`. Register at: https://openreview.net/profile. Without these, OpenReview review/rebuttal data will not be fetched (all other features work normally).
 
 ### Installation prompt
 
@@ -437,7 +437,7 @@ Before using /research, please ensure:
 2. Install hf CLI:
    curl -LsSf https://hf.co/cli/install.sh | bash -s
 
-3. Set up API keys in your `.claude/settings.local.json`:
+3. Set up API keys in your `.claude/settings.json`:
    ```json
    {
      "env": {
@@ -447,6 +447,7 @@ Before using /research, please ensure:
      }
    }
    ```
+   Claude Code automatically exports `env` entries as environment variables.
    - Semantic Scholar: https://www.semanticscholar.org/product/api/api-key
    - OpenReview (optional): https://openreview.net/profile
 ```

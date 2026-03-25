@@ -1,6 +1,6 @@
 # Secrets — never commit API keys
 .claude/settings.local.json
-skills/research/.env
+.claude/settings.json
 
 # Internal dev specs/plans (not for public repo)
 docs/superpowers/

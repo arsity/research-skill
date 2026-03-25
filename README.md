@@ -128,7 +128,7 @@ git clone https://github.com/arsity/research-skill.git ~/.claude/plugins/researc
 
 **Required:**
 
-1. **Semantic Scholar API key** — get one at [semanticscholar.org/product/api](https://www.semanticscholar.org/product/api/api-key), then add to your project's `.claude/settings.local.json`:
+1. **Semantic Scholar API key** — get one at [semanticscholar.org/product/api](https://www.semanticscholar.org/product/api/api-key), then add to your project's `.claude/settings.json`:
    ```json
    {
      "env": {
@@ -136,6 +136,7 @@ git clone https://github.com/arsity/research-skill.git ~/.claude/plugins/researc
      }
    }
    ```
+   Claude Code automatically exports `env` entries as environment variables — scripts read `$S2_API_KEY` directly.
 
 2. **Required plugins:**
    - `tanwei/pua` — provides `pua` and `pua-en` skills
@@ -203,7 +204,7 @@ skills/research/
 bash skills/research/tests/run_all_tests.sh
 ```
 
-Requires `S2_API_KEY` in `.claude/settings.local.json` (see Installation). Tests hit live APIs (S2, DBLP, CrossRef, HF).
+Requires `S2_API_KEY` in `.claude/settings.json` `env` (see Installation). Tests hit live APIs (S2, DBLP, CrossRef, HF).
 
 ## Workspace
 
