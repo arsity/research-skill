@@ -1,0 +1,75 @@
+{
+  "skill_name": "research",
+  "evals": [
+    {
+      "id": 1,
+      "query": "Can you do a paper sweep for `notes/fog_pose_idea.md`? I'm looking for fog-robust human pose estimation for roadside cameras, mostly 2023-2026, and I want the shortlist split into must-read versus probably just arXiv noise.",
+      "should_trigger": true,
+      "expected_command": "discover",
+      "why_tricky": "Sounds like a casual search, but intent is literature discovery + quality ranking + triage"
+    },
+    {
+      "id": 2,
+      "query": "Use the papers we just pulled for `ideas/retrieval_adapter.md`. Can we brainstorm whether retrieval-conditioned adapters for long-context coding agents are actually novel, and where reviewers would say it's just LoRA plus RAG glued together?",
+      "should_trigger": true,
+      "expected_command": "discuss",
+      "why_tricky": "Overlaps with generic brainstorming, but core ask is ideation with adversarial novelty check"
+    },
+    {
+      "id": 3,
+      "query": "Can you read `Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection` with me? I'm deciding whether to use it as the baseline in `experiments/selfrag_baseline/`, so I care about the real methodological delta, weak spots, and whether the gains would survive a skeptical read.",
+      "should_trigger": true,
+      "expected_command": "read",
+      "why_tricky": "'Is this paper good?' could be mistaken for casual opinion, but this is deep single-paper analysis"
+    },
+    {
+      "id": 4,
+      "query": "I'm fixing `paper/references/main.bib`, and I need the BibTeX for `QLoRA: Efficient Finetuning of Quantized LLMs`. Please fetch a verified entry and don't guess if DBLP and CrossRef disagree.",
+      "should_trigger": true,
+      "expected_command": "cite",
+      "why_tricky": "Appears inside bibliography-cleanup workflow, but intent is zero-hallucination citation retrieval"
+    },
+    {
+      "id": 5,
+      "query": "My `paper/related_work.tex` is still bullet fragments, and the project notes are in `notes/vlm_peft_gap.md`. Can you write a real related work section for our PEFT-on-VLM paper using the papers we've already been discussing, with citations that are safe to drop into Overleaf?",
+      "should_trigger": true,
+      "expected_command": "write",
+      "why_tricky": "Existing draft text present, but user asks for literature-grounded section writing, not rewriting"
+    },
+    {
+      "id": 6,
+      "query": "I'm updating `training/finetune_qwen.py`. What's new in `transformers`, `peft`, and `vllm` for Qwen2.5-VL fine-tuning since December 2025, especially any API changes or deprecations that will break our scripts?",
+      "should_trigger": false,
+      "actual_intent": "Product/framework changelog lookup and migration help",
+      "why_tricky": "Uses AI/ML vocab and 'what's new' but is explicitly a framework-update request"
+    },
+    {
+      "id": 7,
+      "query": "Let's brainstorm the rollout plan for the eval dashboard rewrite in `app/evals/README.md`. No papers please, I just need a practical product plan for the next two sprints.",
+      "should_trigger": false,
+      "actual_intent": "Product planning, not academic research ideation",
+      "why_tricky": "'Brainstorm' overlaps with /research discuss, but task is operational"
+    },
+    {
+      "id": 8,
+      "query": "I dropped `references/anthropic_computer_use_blog.md` and `vendor/openai_agents_sdk_whitepaper.pdf` in the repo. Can you read them and tell me which claims are substantive versus marketing?",
+      "should_trigger": false,
+      "actual_intent": "Summarize and critique vendor/blog materials",
+      "why_tricky": "Looks like /research read, but sources are non-scholarly"
+    },
+    {
+      "id": 9,
+      "query": "`paper/refs.bib` has duplicate entries for the same NeurIPS paper plus mangled capitalization in a bunch of titles. Can you dedupe it and normalize the keys without fetching new metadata unless something is obviously missing?",
+      "should_trigger": false,
+      "actual_intent": "Local BibTeX cleanup/editing",
+      "why_tricky": "Citation language present, but user is not asking for verified citation retrieval"
+    },
+    {
+      "id": 10,
+      "query": "Can you turn `docs/design/retrieval_spec.md` into something that sounds like an intro and related work section for the internal review deck? Please stick to what's already in the doc; I'm not asking for any literature search.",
+      "should_trigger": false,
+      "actual_intent": "Rewrite existing prose into paper-ish style",
+      "why_tricky": "Says 'intro' and 'related work' but explicitly excludes literature search"
+    }
+  ]
+}

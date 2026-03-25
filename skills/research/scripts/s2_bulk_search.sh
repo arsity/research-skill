@@ -47,7 +47,7 @@ case "$HTTP_CODE" in
         echo "{\"total\": $TOTAL, \"returned\": $RETURNED}" >&2
 
         echo "$BODY" | jq --arg threshold "$ARXIV_CITATION_THRESHOLD" --argjson req_limit "$LIMIT" '.data[:$req_limit][]? |
-            ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A") as $venue |
+            ([ .venue, .journal ] | map(select(. != null and . != "")) | map(if type == "object" then .name // "" else . end) | map(select(. != "")) | .[0] // "N/A") as $venue |
             ($venue | test("(?i)arxiv")) as $is_arxiv |
             (if $is_arxiv and .citationCount < ($threshold | tonumber) then "caution"
              elif $is_arxiv and .citationCount >= ($threshold | tonumber) then "recommended"

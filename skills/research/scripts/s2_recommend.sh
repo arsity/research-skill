@@ -46,7 +46,7 @@ case "$HTTP_CODE" in
             paper_id: .paperId,
             title: .title,
             year: .year,
-            venue: ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A"),
+            venue: ([ .venue, .journal ] | map(select(. != null and . != "")) | map(if type == "object" then .name // "" else . end) | map(select(. != "")) | .[0] // "N/A"),
             citations: .citationCount,
             doi: .externalIds.DOI,
             arxiv_id: .externalIds.ArXiv,

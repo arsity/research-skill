@@ -6,13 +6,13 @@
   },
   "metadata": {
     "description": "A Claude Code plugin marketplace for academic research tools.",
-    "version": "1.3.1"
+    "version": "1.3.2"
   },
   "plugins": [
     {
       "name": "research",
       "description": "Academic research copilot for AI/ML and technical literature. Use when the user says things like 'find me papers on…', 'what's new in…', 'let's brainstorm about…', 'is this paper any good?', 'give me the bibtex', or 'help write related work.' Also fits trending paper monitoring, citation graph exploration, venue/journal quality checks, and fetching reviews.",
-      "version": "1.3.1",
+      "version": "1.3.2",
       "source": "./",
       "author": {
         "name": "arsity",

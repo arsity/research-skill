@@ -43,7 +43,7 @@ case "$HTTP_CODE" in
             exit 0
         fi
         echo "$BODY" | jq --arg threshold "$ARXIV_CITATION_THRESHOLD" '.data[]? |
-            ([ .venue, .journal ] | map(select(. != null and . != "")) | .[0] // "N/A") as $venue |
+            ([ .venue, .journal ] | map(select(. != null and . != "")) | map(if type == "object" then .name // "" else . end) | map(select(. != "")) | .[0] // "N/A") as $venue |
             ($venue | test("(?i)arxiv")) as $is_arxiv |
             (if $is_arxiv and .citationCount < ($threshold | tonumber) then "caution"
              elif $is_arxiv and .citationCount >= ($threshold | tonumber) then "recommended"
