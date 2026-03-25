@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Context
 
-**research-skill** is a Claude Code plugin that provides an academic research lifecycle through a single `/research` command. It covers literature discovery, deep discussion/ideation, paper reading, citation management, paper writing, and trend monitoring.
+**scholar-tools** is a Claude Code plugin that provides an academic research lifecycle through a single `/research` command. It covers literature discovery, deep discussion/ideation, paper reading, citation management, paper writing, and trend monitoring.
 
 The central innovation is a **Skill Router** that maps paper content to 21 domain skill categories (from Orchestra-Research/AI-Research-SKILLs), injecting expert knowledge into every phase. Every citation must trace to an API call — never to model memory.
 

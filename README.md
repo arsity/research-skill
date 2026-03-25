@@ -1,4 +1,4 @@
-# research-skill
+# scholar-tools
 
 A Claude Code plugin for academic research with domain-aware skill routing. `/research discover "topic"` searches multiple databases in parallel, ranks papers by venue quality and citations, quick-reads the top results, and provides a landscape summary. `/research discuss` drives deep research ideation with adversarial novelty checks and reviewer simulation. `/research cite` generates verified BibTeX. Every citation traces to an API call, never to model memory.
 
@@ -117,11 +117,11 @@ The write phase adds two quality mechanisms:
 
 ```bash
 # Option 1: Install via marketplace
-claude plugin marketplace add arsity/research-skill
-claude plugin install research-skill@research-skill
+claude plugin marketplace add arsity/scholar-tools
+claude plugin install scholar-tools@research
 
 # Option 2: Manual install
-git clone https://github.com/arsity/research-skill.git ~/.claude/plugins/research-skill
+git clone https://github.com/arsity/scholar-tools.git ~/.claude/plugins/scholar-tools
 ```
 
 ### Prerequisites
