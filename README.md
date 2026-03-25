@@ -148,6 +148,19 @@ git clone https://github.com/arsity/research-skill.git ~/.claude/plugins/researc
    curl -LsSf https://hf.co/cli/install.sh | bash -s
    ```
 
+**Optional:**
+
+4. **OpenReview credentials** — for fetching peer reviews, rebuttals, and meta-reviews of papers at venues using OpenReview (ICLR, NeurIPS, ICML, etc.). Register at [openreview.net/profile](https://openreview.net/profile), then add to `.claude/settings.json`:
+   ```json
+   {
+     "env": {
+       "OPENREVIEW_USER": "your-email",
+       "OPENREVIEW_PASS": "your-password"
+     }
+   }
+   ```
+   Without these, all other features work normally — OpenReview integration is best-effort.
+
 ## Project structure
 
 ```

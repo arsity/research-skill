@@ -67,7 +67,8 @@ Fetched paper content is expensive (network latency, rate limits, AlphaXiv/arXiv
 ├── openreview/
 │   ├── reviews.json     # OpenReview official reviews (if venue uses OpenReview)
 │   ├── rebuttal.json    # Author rebuttals (if available)
-│   └── meta_review.json # AC/SAC meta-review (if available)
+│   ├── meta_review.json # AC/SAC meta-review (if available)
+│   └── decision.json    # Accept/reject decision (if available)
 └── cache_meta.json      # What was cached, when, from where
 ```
 
@@ -84,7 +85,7 @@ Fetched paper content is expensive (network latency, rate limits, AlphaXiv/arXiv
     "fulltext": { "source": "alphaxiv", "status": "cached|404|not_attempted" },
     "pdf": { "source": "arxiv|publisher|s2_open_access", "status": "cached|404|not_attempted" },
     "supplementary": { "source": "publisher|arxiv", "status": "cached|404|not_attempted" },
-    "openreview": { "source": "openreview_api", "status": "cached|not_found|private|no_credentials|not_attempted", "venue": "ICLR 2024" }
+    "openreview": { "source": "openreview_api", "status": "cached|not_found|private|auth_failed|no_credentials|error|not_attempted", "venue": "ICLR 2024" }
   }
 }
 ```
@@ -101,23 +102,31 @@ Fetched paper content is expensive (network latency, rate limits, AlphaXiv/arXiv
 
 ### OpenReview integration
 
-For papers published at venues that use OpenReview (ICLR, NeurIPS, ICML, and others), attempt to fetch review records.
+For papers published at venues that use OpenReview, attempt to fetch review records. This is a best-effort enhancement — all other features work without it.
 
-**Authentication required**: The OpenReview API requires a Bearer token. Obtain via `POST https://api2.openreview.net/login` with username/password, or use the `openreview-py` Python client. If no OpenReview credentials are configured, skip OpenReview fetch entirely (log warning, set `status: "no_credentials"`).
+**Authentication required**: The OpenReview API v2 (`https://api2.openreview.net`) requires a Bearer token. Obtain via `POST /login` with username/password. If no credentials are configured, skip entirely (log warning, set `status: "no_credentials"`). If `/login` returns `mfaPending`, log warning and skip (MFA accounts not supported in curl flow).
 
-**Credentials config**: Set `OPENREVIEW_USER` and `OPENREVIEW_PASS` in `.claude/settings.json` under `"env"`. These are optional — the entire OpenReview integration is a best-effort enhancement.
+**Credentials config**: Set `OPENREVIEW_USER` and `OPENREVIEW_PASS` in `.claude/settings.json` under `"env"`.
 
 **Fetch flow** (when credentials are available):
 
-1. **Detect OpenReview venue**: Check if the paper's venue (from S2 metadata) is known to use OpenReview. Known venues: ICLR, NeurIPS, ICML, COLM, EMNLP, ACL (recent years), AISTATS.
-2. **Authenticate**: `curl -sL -X POST "https://api2.openreview.net/login" -d '{"id":"$OPENREVIEW_USER","password":"$OPENREVIEW_PASS"}'` → extract `token` from response.
-3. **Search OpenReview**: `curl -sL -H "Authorization: Bearer $TOKEN" "https://api2.openreview.net/notes/search?query={title}&source=forum&limit=3"` — match by title + year.
-4. **Fetch reviews**: If forum found, fetch all replies: `curl -sL -H "Authorization: Bearer $TOKEN" "https://api2.openreview.net/notes?forum={forum_id}"`. Parse into:
-   - **Official reviews**: invitations containing "Official_Review"
-   - **Author rebuttals**: invitations containing "Rebuttal" or author replies
-   - **Meta-reviews**: invitations containing "Meta_Review" or "Decision"
-5. **Save**: Write `reviews.json`, `rebuttal.json`, `meta_review.json` to `cache/{paper_id}/openreview/`.
-6. **Graceful degradation**: If OpenReview API returns 403 (private reviews), empty results, or network error, set `status: "not_found"` or `"private"` and proceed. Do NOT freeze 403 as permanent — reviews may become public after camera-ready. OpenReview data is valuable but never required.
+1. **Detect OpenReview venue**: Check if the paper's venue (from S2 metadata) is known to use OpenReview. Known venues: ICLR, NeurIPS, ICML, AAAI, CVPR, ICCV, ECCV, COLM, EMNLP, ACL, NAACL, AISTATS, UAI, KDD, The Web Conference, TMLR, and ARR (review-only, not a publication venue). This list is not exhaustive — if a venue is not listed but the paper has an OpenReview URL in S2 metadata, attempt fetch anyway.
+2. **Authenticate**: `curl -sL -X POST -H "Content-Type: application/json" "https://api2.openreview.net/login" -d "{\"id\":\"$OPENREVIEW_USER\",\"password\":\"$OPENREVIEW_PASS\"}"` → extract `token` from JSON response.
+3. **Search OpenReview**: `curl -sL -H "Authorization: Bearer $TOKEN" "https://api2.openreview.net/notes/search?term={url_encoded_title}&source=forum&limit=3"` — match by normalized title equality. If the venue ID is known, add `&content.venueid={venue_id}` to narrow results.
+4. **Fetch reviews**: If forum found, fetch replies using `details=replies` on the submission note: `curl -sL -H "Authorization: Bearer $TOKEN" "https://api2.openreview.net/notes?forum={forum_id}&details=replies&limit=1000"`. Classify replies by invitation suffix:
+   - **Official reviews**: invitation ending in `Official_Review` (or venue-specific review name)
+   - **Author rebuttals**: invitation ending in `Rebuttal` (a specific stage, not general author comments)
+   - **Meta-reviews**: invitation ending in `Meta_Review`
+   - **Decisions**: invitation ending in `Decision` (store separately from meta-reviews)
+   - Note: invitation names are venue-configurable. The suffixes above cover ~95% of cases. If a venue uses non-standard names, reviews may be missed — this is acceptable for best-effort.
+5. **Parse v2 content shape**: In API v2, note content fields are nested: `note.content.{field}.value` (not `note.content.{field}` directly). For example, review text is at `note.content.review.value`, rating at `note.content.rating.value`. Some fields may also have `note.content.{field}.readers` controlling visibility.
+6. **Save**: Write `reviews.json`, `rebuttal.json`, `meta_review.json`, `decision.json` to `cache/{paper_id}/openreview/`.
+7. **Graceful degradation**: Handle failures with appropriate status:
+   - Auth failure (401) → `status: "auth_failed"`, log warning
+   - Restricted data (403 or notes returned with redacted/missing fields) → `status: "private"`. Do NOT freeze as permanent — reviews may become public after camera-ready
+   - Not found (empty results) → `status: "not_found"`
+   - Network/server error (500/502/503/504) → retry once, then `status: "error"`
+   - OpenReview data is valuable but never blocking
 
 ### How cache integrates with phases
 
