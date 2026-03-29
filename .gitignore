@@ -10,3 +10,4 @@ docs/superpowers/
 
 # Research workspace (generated at runtime)
 .research-workspace/
+__pycache__/

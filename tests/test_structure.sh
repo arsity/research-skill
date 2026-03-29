@@ -22,7 +22,7 @@ done
 
 # 2. Check all scripts referenced across phase files exist
 echo "[2] Checking script references..."
-REFERENCED_SCRIPTS=$(grep -roh 'scripts/[a-z_]*.sh' "$PHASES_DIR" "$SCRIPT_DIR/SKILL.md" 2>/dev/null | sort -u)
+REFERENCED_SCRIPTS=$(grep -roEh 'scripts/[a-z_]+\.(sh|py)' "$PHASES_DIR" "$SCRIPT_DIR/SKILL.md" 2>/dev/null | sort -u)
 for script_ref in $REFERENCED_SCRIPTS; do
   script_name=$(basename "$script_ref")
   if [[ -f "$SCRIPTS_DIR/$script_name" ]]; then

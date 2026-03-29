@@ -27,7 +27,54 @@ Use unified input parsing (defined in SKILL.md):
 Execute in order. Stop at the first success.
 
 ```
-1. DBLP (highest quality for published papers)
+0a. CVF Open Access (golden standard for CVPR/ICCV/WACV, 2013+)
+   → Prerequisite: Step 1 must have confirmed venue and year first
+   → Only if venue matches CVPR, ICCV, or WACV and year >= 2013
+   → python3 scripts/cvf_bibtex.py "<title>" "<author_token>" "<CONF>" "<year>"
+   → author_token: the surname token CVF uses in the filename — typically the first
+     author's last name, but occasionally the presenter or submitting author.
+     For compound names like "Rota Bulo", use the last token ("Bulo").
+   → If CVF returns BibTeX: cross-check with DBLP (see CVF cross-check below)
+   → Tag: "via CVF ✓ (DBLP cross-checked)" or "via CVF ✓"
+
+0b. NeurIPS Proceedings (golden standard for NeurIPS/NIPS, 1987+)
+   → Prerequisite: Step 1 must have confirmed venue and year first
+   → Only if venue matches NeurIPS or NIPS (main conference or Datasets &
+     Benchmarks track — NOT workshops)
+   → python3 scripts/neurips_bibtex.py "<title>" "<year>"
+   → Two-source strategy (handled internally by the script):
+     • papers.nips.cc: official proceedings (1987–2024), richer BibTeX
+       (author, booktitle, editor, pages, publisher, volume, year)
+       Includes Datasets & Benchmarks track from 2022+.
+     • datasets-benchmarks-proceedings.neurips.cc: D&B track 2021
+       (separate site, same URL pattern and BibTeX quality)
+     • OpenReview API v2: fallback for recent years not yet on nips.cc
+       (title, author, booktitle, year, url)
+       Includes NeurIPS 2023+ main conference and D&B track.
+   → Script outputs source to stderr: "source: nips.cc" or "source: OpenReview"
+   → If BibTeX returned: cross-check with DBLP (see NeurIPS cross-check below)
+   → Tag: "via NeurIPS proceedings ✓ (DBLP cross-checked)" or
+     "via NeurIPS proceedings ✓" or "via OpenReview ✓ (DBLP cross-checked)"
+
+0c. ICLR Proceedings (golden standard for ICLR, 2021+)
+   → Prerequisite: Step 1 must have confirmed venue and year first
+   → Only if venue matches ICLR (main conference — NOT workshops)
+   → python3 scripts/iclr_bibtex.py "<title>" "<year>"
+   → Dual-API strategy (OpenReview):
+     • ICLR 2024+: OpenReview API v2 (api2.openreview.net)
+     • ICLR 2021-2023: OpenReview API v1 (api.openreview.net)
+     • ICLR 2018-2020: No reliable acceptance data — use DBLP instead
+     • Acceptance filtering (CRITICAL — triple-layer):
+       1. venueid == "ICLR.cc/{year}/Conference" exact match
+       2. venue string allowlist: must match "ICLR YYYY Poster/Oral/Spotlight"
+       3. BibTeX type must be @inproceedings (not @misc)
+     • Rejected, withdrawn, desk-rejected, and workshop papers excluded
+   → Script outputs source to stderr: "source: OpenReview"
+   → If BibTeX returned: cross-check with DBLP (see DBLP cross-check below)
+   → Tag: "via ICLR proceedings ✓ (DBLP cross-checked)" or
+     "via ICLR proceedings ✓"
+
+1. DBLP (highest quality for other published papers)
    → dblp_search.sh "<title>" 5
    → Check top result: tokenize both titles (split whitespace, lowercase)
    → If token overlap > 90% (intersection/union): confirmed match
@@ -63,6 +110,47 @@ Execute in order. Stop at the first success.
    → Do NOT generate from model knowledge
 ```
 
+### DBLP cross-check (applies to both CVF and NeurIPS golden sources)
+
+**Why DBLP**: DBLP metadata is human-curated — we trust its content accuracy.
+CVF/NeurIPS proceedings have better formatting (venue names, booktitle style),
+but DBLP catches errors the proceedings sites may have (typos, wrong metadata).
+Use the golden source BibTeX for FORMAT, DBLP for CONTENT verification.
+
+When CVF (step 0a), NeurIPS (step 0b), or ICLR (step 0c) BibTeX is obtained, run
+`dblp_search.sh "<title>" 3` in parallel to cross-check.
+
+**Required checks** (must match — mismatch indicates wrong paper):
+
+1. **Title**: token overlap > 90% (Jaccard). Minor formatting differences OK.
+2. **First author**: last name must match (case-insensitive). DBLP may use
+   different name ordering or abbreviation — that's OK as long as surnames match.
+3. **Year**: must match exactly.
+4. **Venue**: both must indicate the same conference.
+   - CVF: full booktitle contains "(CVPR)" / "(ICCV)" / "(WACV)"
+   - NeurIPS: booktitle is "Advances in Neural Information Processing Systems";
+     DBLP uses "NeurIPS" or "NIPS"
+   - ICLR: booktitle is "The Nth International Conference on Learning
+     Representations"; DBLP uses "ICLR"
+   - Match by checking the conference abbreviation appears in both.
+
+**Enrichment checks** (if DBLP has it but golden source doesn't, supplement):
+
+5. **Pages**: if DBLP has page numbers and the golden source BibTeX doesn't,
+   add them (especially for OpenReview BibTeX which lacks pages).
+6. **Volume**: if missing in golden source, add from DBLP.
+7. **DOI**: if DBLP has a DOI and golden source doesn't, add it.
+
+**Cross-check outcomes:**
+- Required checks all pass → use golden source BibTeX (with any enrichment),
+  tag: "via CVF ✓ (DBLP cross-checked)" / "via NeurIPS proceedings ✓ (DBLP
+  cross-checked)" / "via ICLR proceedings ✓ (DBLP cross-checked)" /
+  "via OpenReview ✓ (DBLP cross-checked)"
+- DBLP unavailable or no match found → use golden source BibTeX as-is
+  (it's the publisher), tag without "(DBLP cross-checked)"
+- Required check mismatch → warn user, present both BibTeX entries for
+  manual review (likely indicates wrong paper match)
+
 ### DBLP matching strategy
 
 ```python
@@ -90,7 +178,7 @@ bash scripts/author_info.sh "<first_author_id>"
 Before outputting any BibTeX, invoke `superpowers:verification-before-completion` to confirm:
 - Every BibTeX entry has all required fields populated from an API response (author, title, year, venue/booktitle/journal)
 - The `source_tag` is set (no untagged entries)
-- No field was filled from model memory — every value traces to a DBLP/CrossRef/S2 API call
+- No field was filled from model memory — every value traces to a CVF/NeurIPS/ICLR/OpenReview/DBLP/CrossRef/S2 API call
 - If source is "via S2", the manual-verify warning is attached
 
 If any check fails, loop back to Step 2 to retry the next source in the chain. If the entire chain is exhausted, report failure — do not fabricate.

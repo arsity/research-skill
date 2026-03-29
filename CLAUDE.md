@@ -26,7 +26,7 @@ bash skills/research/scripts/s2_search.sh "human pose estimation" 10
 bash tests/test_structure.sh
 ```
 
-No build step. No package manager. All scripts are plain bash with `curl`, `jq`, and `sqlite3` as external dependencies.
+No build step. No package manager. Scripts are plain bash with `curl`, `jq`, and `sqlite3` as external dependencies. Exception: `cvf_bibtex.py` is Python 3 (stdlib only, no pip packages) for HTML parsing — requires `python3`.
 
 ## Architecture
 
